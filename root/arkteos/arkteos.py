@@ -44,7 +44,6 @@ def main():
     CONNECTED = False
     mqtt_client = mqtt.Client('arkteos.py')
     mqtt_client.username_pw_set(USERNAME, PASSWORD)
-    mqtt_client.on_connect = on_connect
     try:
         mqtt_client.connect(MQTT_HOST, MQTT_PORT)
     except:
