@@ -1,5 +1,13 @@
-# Utilisez une image de base avec Python
-FROM python:3
+ARG BUILD_FROM
+FROM $BUILD_FROM
+
+ARG BUILD_ARCH
+ARG BIN_VERSION=v0.0.28
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y -q --install-recommends --no-install-suggests tzdata python3 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Créez un répertoire de travail dans le conteneur
 WORKDIR /
