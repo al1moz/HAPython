@@ -40,9 +40,9 @@ CHAR_MEASURE_KEYS = ['DATE', 'NGTF', 'LTARF', 'MSG1', 'NJOURF', 'NJOURF+1',
 
 #LOGFOLDER = "/app/log"
 #LOGFILE = "releve.log"
-TELEINFO_INI = "/app/teleinfo.ini"
-KEYS_FILE = "/app/liste_champs_mode_standard.txt"
-DICO_FILE = "/app/liste_fabriquants_linky.txt"
+TELEINFO_INI = "/teleinfo/teleinfo.ini"
+KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
+DICO_FILE = "/teleinfo/liste_fabriquants_linky.txt"
 
 # Check if log folder exist
 #if not pathlib.Path(LOGFOLDER).exists():
