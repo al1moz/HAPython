@@ -61,6 +61,7 @@ DB_SERVER = TELEINFO_DATA['influxdb_server']
 DB_PORT = TELEINFO_DATA['influxdb_port']
 DB_DATABASE = TELEINFO_DATA['influxdb_database']
 
+USBPORT = os.environ.get('USBPORT')
 
 # création du logguer
 #logging.basicConfig(filename=LOGFOLDER + LOGFILE,level=logging.INFO, format='%(asctime)s %(message)s')
@@ -102,7 +103,8 @@ def add_measures(measures):
                 }
             }
         points.append(point)
-        print(measure+":"+str(value).strip())
+        if measure=='EASF01':
+           print(measure+":"+str(value).strip())
 
     CLIENT.write_points(points)
 
@@ -144,11 +146,11 @@ def dico_from_file(file):
 
 def main():
     """Main function to read teleinfo."""
-    with serial.Serial(port='/dev/ttyUSB1', baudrate=9600, parity=serial.PARITY_EVEN,
+    with serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_EVEN,
                        stopbits=serial.STOPBITS_ONE,
                        bytesize=serial.SEVENBITS, timeout=1) as ser:
         # stopbits=serial.STOPBITS_ONE,
-        logging.info("Teleinfo is reading on /dev/ttyUSB1..")
+        logging.info("Teleinfo is reading on ",USBPORT)
         logging.info("Mode standard")
 
         labels_linky = keys_from_file(KEYS_FILE)

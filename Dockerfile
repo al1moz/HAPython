@@ -12,4 +12,4 @@ COPY root /
 
 
 # Commande par défaut à exécuter lorsque le conteneur démarre
-CMD ["python3", "teleinfo_standard.py"]
+#CMD ["python3", "teleinfo_standard.py"]

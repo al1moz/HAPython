@@ -9,4 +9,4 @@ declare password_mqtt
 password_mqtt=$(bashio::config 'password_mqtt')
 export PASSWORDMQTT="${password_mqtt}"
 
-exec python3 /getmqtt/getMqtt.py
+exec /usr/bin/python3 /getmqtt/getMqtt.py
