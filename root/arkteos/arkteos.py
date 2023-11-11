@@ -42,7 +42,7 @@ def main():
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     CONNECTED = False
-    mqtt_client = mqtt_client.Client('arkteos.py')
+    mqtt_client = mqtt.Client('arkteos.py')
     mqtt_client.username_pw_set(username, password)
     mqtt_client.on_connect = on_connect
     try:
