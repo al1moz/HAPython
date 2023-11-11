@@ -2,7 +2,7 @@
 FROM python:3
 
 # Créez un répertoire de travail dans le conteneur
-WORKDIR /app
+WORKDIR /
 
 # Installez les modules nécessaires
 RUN pip install pyserial influxdb paho.mqtt
