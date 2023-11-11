@@ -5,7 +5,7 @@ FROM python:3
 WORKDIR /app
 
 # Installez les modules nécessaires
-RUN pip install pyserial influxdb
+RUN pip install pyserial influxdb paho.mqtt
 
 # Copiez votre script Python dans le conteneur
 COPY root /

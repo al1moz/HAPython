@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.info "Running getMqtt addon"
+
+# Declare variables
+declare password_mqtt
+
+# Get all arguments
+password_mqtt=$(bashio::config 'password_mqtt')
+export PASSWORDMQTT="${password_mqtt}"
+
+exec python3 /getmqtt/getMqtt.py
