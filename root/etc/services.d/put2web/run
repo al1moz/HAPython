@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.info "Running Put2Web addon"
+
+exec python3 /getmqtt/put2web.py
