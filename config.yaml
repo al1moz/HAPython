@@ -1,0 +1,25 @@
+
+---
+name: HAPython
+version: "0.0.0.1"
+slug: hapython
+description: Python Add-ons
+url: https://github.com/al1moz/HAPython
+codenotary: codenotary@frenck.dev
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+host_network: true
+video: true
+devices:
+  - /dev/ttyUSB1:/dev/ttyUSB1
+options:
+  log_level: info
+  port_usb: ""
+schema:
+  log_level: list(trace|debug|info|notice|warning|error|fatal)
+  port_usb: str
