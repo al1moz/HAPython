@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import time
+import logging
 from influxdb import InfluxDBClient
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
