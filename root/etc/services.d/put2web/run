@@ -2,4 +2,4 @@
 
 bashio::log.info "Running Put2Web addon"
 
-exec python3 /getmqtt/put2web.py
+exec python3 /put2web/put2web.py

@@ -103,8 +103,8 @@ def add_measures(measures):
                 }
             }
         points.append(point)
-        if measure=='EASF01':
-           print(measure+":"+str(value).strip())
+        #if measure=='EASF01':
+        #   print(measure+":"+str(value).strip())
 
     CLIENT.write_points(points)
 

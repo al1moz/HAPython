@@ -2,6 +2,7 @@
 
 import os
 import time
+import logging
 from datetime import datetime
 import random
 from influxdb import InfluxDBClient
@@ -68,7 +69,6 @@ def subscribe(client: mqtt_client):
     client.subscribe('shellies/shellyem4/emeter/0/power')
     client.subscribe('shellies/shellyem4/emeter/1/power')
     client.on_message = on_message
-
 
 def run():
     client = connect_mqtt()

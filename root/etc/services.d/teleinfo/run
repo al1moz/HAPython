@@ -9,4 +9,4 @@ declare port_usb
 port_usb=$(bashio::config 'port_usb')
 export USBPORT="${port_usb}"
 
-exec python3 /app/teleinfo_standard.py
+exec python3 /teleinfo/teleinfo_standard.py

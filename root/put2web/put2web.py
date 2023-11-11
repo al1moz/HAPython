@@ -6,7 +6,7 @@ from influxdb import InfluxDBClient
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 
-logging.info("Put2Web starting..")
+print("Put2Web starting..")
 
 DB_HOST = '192.168.252.4'
 DB_DATABASE = 'teleinfo2'
