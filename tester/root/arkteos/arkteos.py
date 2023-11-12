@@ -5,10 +5,11 @@
 import socket
 import time
 import os
+import random
 import logging
 from datetime import datetime
 import sys
-import paho.mqtt.client as mqtt
+from paho.mqtt import client as mqtt_client
 
 HOST = '192.168.252.152'
 PORT = 9641
@@ -18,9 +19,14 @@ MQTT_HOST = '192.168.252.4'
 MQTT_PORT = 1883
 USERNAME = 'mqtt'
 PASSWORD = os.environ.get('PASSWORDMQTT')
+client_id = f'python-mqtt-{random.randint(0, 100)}'
 
 logging.basicConfig(level=logging.DEBUG)
 
+if len(PASSWORD) <1:
+    logging.error('No password MQTT defined')
+    exit(1)
+    
 decoder = [
     { 'stream' : 227, 'name' : 'primaire_pression' ,'descr' : 'Pression eau primaire', 'byte1': 62, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
     { 'stream' : 227, 'name' : 'externe_pression' ,'descr' : 'Pression eau extérieure', 'byte1': 46, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
@@ -35,6 +41,19 @@ decoder = [
     { 'stream' : 227, 'name' : 'ecs_temp_eau_bas' ,'descr' : 'Température ballon ECS bas', 'byte1': 110, 'weight1': 1, 'byte2': 111, 'weight2': 256, 'divider': 10 },
 ]
 
+def connect_mqtt() -> mqtt_client:
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            logging.info("Connected to MQTT Broker!")
+        else:
+            logging.warning("Failed to connect, return code %d\n", rc)
+
+    client = mqtt_client.Client(client_id)
+    client.username_pw_set(USERNAME, PASSWORD)
+    client.on_connect = on_connect
+    client.connect(MQTT_HOST, MQTT_PORT)
+    return client
+
 def main():
     stream_received = { 
         163 : False, 
@@ -43,9 +62,7 @@ def main():
 
 
 
-    mqtt_client = mqtt.Client('arkteos.py')
-    mqtt_client.username_pw_set(USERNAME, PASSWORD)
-    mqtt_client.connect(MQTT_HOST, MQTT_PORT)
+    mqttclient = connect_mqtt()
     logging.info("Arkteos MQTT connection")
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,7 +97,7 @@ def main():
                 item_value=(data[item['byte1']]*item['weight1']+data[item['byte2']]*item['weight2'])/item['divider']
             #print('%s:%.1f, ' % (item['name'], item_value),end='')
             logging.debug(datetime.utcnow().strftime("%H:%M:%S")+':'+MQTT_BASE_TOPIC + item['name']+':%.1f',item_value)
-            mqtt_client.publish(MQTT_BASE_TOPIC + item['name'], item_value)
+            mqttclient.publish(MQTT_BASE_TOPIC + item['name'], item_value)
         #print('')
 
     client.shutdown(socket.SHUT_RDWR)
