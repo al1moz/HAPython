@@ -23,10 +23,10 @@ client_id = f'python-mqtt-{random.randint(0, 100)}'
 
 logging.basicConfig(level=logging.DEBUG)
 
-if len(PASSWORD) <1:
+if PASSWORD is None:
     logging.error('No password MQTT defined')
     exit(1)
-    
+
 decoder = [
     { 'stream' : 227, 'name' : 'primaire_pression' ,'descr' : 'Pression eau primaire', 'byte1': 62, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
     { 'stream' : 227, 'name' : 'externe_pression' ,'descr' : 'Pression eau extérieure', 'byte1': 46, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
