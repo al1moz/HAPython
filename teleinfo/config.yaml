@@ -1,0 +1,26 @@
+
+---
+name: HAPython TeleInfo
+version: "0.0.1.9"
+slug: hapython-teleinfo
+description: Python Téléinfo Add-ons
+url: https://github.com/al1moz/HAPython/teleinfo
+codenotary: notary@home-assistant.io
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+host_network: true
+devices:
+  - /dev/ttyUSB1:/dev/ttyUSB1
+options:
+  port_usb: "/dev/ttyUSB1"
+  password_mqtt: ""
+schema:
+  port_usb: str
+  password_mqtt: password
+map:
+  - config:rw

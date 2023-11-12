@@ -1,0 +1,9 @@
+---
+configuration:
+  port_usb:
+    name: Port USB
+    description: >-
+      Port USB pour le téléinfo.
+  password_mqtt:
+    name: password 
+    description: Mot de passe MQTT

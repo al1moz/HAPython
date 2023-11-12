@@ -1,10 +1,10 @@
 
 ---
-name: HAPython
-version: "0.0.1.9"
-slug: hapython
-description: Python Add-ons
-url: https://github.com/al1moz/HAPython
+name: HAPython-Test
+version: "0.0.0.1"
+slug: hapython-test
+description: Python Tester Add-ons
+url: https://github.com/al1moz/HAPython/tester
 codenotary: notary@home-assistant.io
 init: false
 arch:
