@@ -32,6 +32,8 @@ decoder = [
     { 'stream' : 227, 'name' : 'ecs_temp_eau_bas' ,'descr' : 'Température ballon ECS bas', 'byte1': 110, 'weight1': 1, 'byte2': 111, 'weight2': 256, 'divider': 10 },
 ]
 
+def print_to_stdout(*a):
+    print(*a, file=sys.stdout)
 
 def main():
     stream_received = { 
@@ -42,7 +44,7 @@ def main():
     mqtt_client = mqtt.Client('arkteos.py')
     mqtt_client.username_pw_set(USERNAME, PASSWORD)
     mqtt_client.connect(MQTT_HOST, MQTT_PORT)
-    print("Arkteos MQTT connection")
+    print_to_stdout("Arkteos MQTT connection")
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     CONNECTED = False
@@ -51,9 +53,9 @@ def main():
             client.connect((HOST, PORT))
             CONNECTED = True
         except socket.error as e:
-            print("Connection failed (%s), waiting" % e)
+            print_to_stdout("Connection failed (%s), waiting" % e)
             time.sleep(3)
-    print('Arkteos Connection to ' + HOST + ':' + str(PORT) + ' successfull.')
+    print_to_stdout('Arkteos Connection to ' + HOST + ':' + str(PORT) + ' successfull.')
 
     #Boucle sur la réponse jusqu'a recevoir les deux flux
     while not ( stream_received[163] and stream_received[227] ):
@@ -75,13 +77,13 @@ def main():
             else :
                 item_value=(data[item['byte1']]*item['weight1']+data[item['byte2']]*item['weight2'])/item['divider']
             #print('%s:%.1f, ' % (item['name'], item_value),end='')
-            print(datetime.utcnow().strftime("%H:%M:%S"),':',MQTT_BASE_TOPIC + item['name'],':', item_value)
+            print_to_stdout(datetime.utcnow().strftime("%H:%M:%S"),':',MQTT_BASE_TOPIC + item['name'],':', item_value)
             mqtt_client.publish(MQTT_BASE_TOPIC + item['name'], item_value)
         #print('')
 
     client.shutdown(socket.SHUT_RDWR)
     client.close()
-    print('Arkteos Connection: end')
+    print_to_stdout('Arkteos Connection: end')
 
 if __name__ == '__main__':
     while True:

@@ -1,7 +1,7 @@
 
 ---
 name: HAPython
-version: "0.0.1.6"
+version: "0.0.1.7"
 slug: hapython
 description: Python Add-ons
 url: https://github.com/al1moz/HAPython
@@ -23,6 +23,6 @@ options:
 schema:
   log_level: list(trace|debug|info|notice|warning|error|fatal)
   port_usb: str
-  password_mqtt: str
+  password_mqtt: password
 map:
   - config:rw
