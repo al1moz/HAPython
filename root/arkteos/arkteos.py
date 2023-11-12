@@ -11,9 +11,8 @@ import paho.mqtt.client as mqtt
 
 HOST = '192.168.252.152'
 PORT = 9641
-MQTT_HOST = "192.168.252.4"
-MQTT_BASE_TOPIC = "arkteos/reg3/"   # don't forget the trailing slash
 
+MQTT_BASE_TOPIC = "arkteos/reg3/"   # don't forget the trailing slash
 MQTT_HOST = '192.168.252.4'
 MQTT_PORT = 1883
 USERNAME = 'mqtt'
@@ -40,15 +39,13 @@ def main():
         227 : False 
     }
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    CONNECTED = False
     mqtt_client = mqtt.Client('arkteos.py')
     mqtt_client.username_pw_set(USERNAME, PASSWORD)
-    try:
-        mqtt_client.connect(MQTT_HOST, MQTT_PORT)
-    except:
-        print("Arkteos Error: MQTT connection failed")
+    mqtt_client.connect(MQTT_HOST, MQTT_PORT)
+    print("Arkteos MQTT connection")
 
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    CONNECTED = False
     while not CONNECTED : # Wait for connection to be available, sometimes one or two minutes
         try :
             client.connect((HOST, PORT))
@@ -58,6 +55,7 @@ def main():
             time.sleep(3)
     print('Arkteos Connection to ' + HOST + ':' + str(PORT) + ' successfull.')
 
+    #Boucle sur la réponse jusqu'a recevoir les deux flux
     while not ( stream_received[163] and stream_received[227] ):
         data_lenght = 0
         try :
@@ -83,6 +81,7 @@ def main():
 
     client.shutdown(socket.SHUT_RDWR)
     client.close()
+    print('Arkteos Connection: end')
 
 if __name__ == '__main__':
     while True:
