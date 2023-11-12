@@ -19,7 +19,7 @@ while not CONNECTED:
         CLIENT.switch_database(DB_DATABASE)
         logging.info("Connected to %s!", DB_DATABASE)
     except requests.exceptions.ConnectionError:
-        logging.info('InfluxDB is not reachable. Waiting 5 seconds to retry.')
+        logging.warning('InfluxDB is not reachable. Waiting 5 seconds to retry.')
         time.sleep(5)
     else:
         CONNECTED = True

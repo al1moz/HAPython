@@ -1,7 +1,7 @@
 
 ---
 name: HAPython
-version: "0.0.1.7"
+version: "0.0.1.8"
 slug: hapython
 description: Python Add-ons
 url: https://github.com/al1moz/HAPython
@@ -14,6 +14,10 @@ arch:
   - armv7
   - i386
 host_network: true
+logger:
+  default: info
+  logs:
+    homeassistant.components.python_script: info
 devices:
   - /dev/ttyUSB1:/dev/ttyUSB1
 options:

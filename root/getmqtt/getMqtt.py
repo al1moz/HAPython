@@ -29,9 +29,9 @@ while not CONNECTED:
         if {'name': DB_DATABASE} not in CLIENT.get_list_database():
             CLIENT.create_database(DB_DATABASE)
         CLIENT.switch_database(DB_DATABASE)
-        print("Connected to influxDB")
+        logging.info("Connected to influxDB")
     except requests.exceptions.ConnectionError:
-        print('InfluxDB is not reachable. Waiting 5 seconds to retry.')
+        logging.warning('InfluxDB is not reachable. Waiting 5 seconds to retry.')
         time.sleep(5)
     else:
         CONNECTED = True
@@ -39,9 +39,9 @@ while not CONNECTED:
 def connect_mqtt() -> mqtt_client:
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            logging.info("Connected to MQTT Broker!")
         else:
-            print("Failed to connect, return code %d\n", rc)
+            logging.warning("Failed to connect, return code %d\n", rc)
 
     client = mqtt_client.Client(client_id)
     client.username_pw_set(username, password)

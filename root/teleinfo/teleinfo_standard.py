@@ -80,7 +80,7 @@ while not CONNECTED:
         CLIENT.switch_database(DB_DATABASE)
         logging.info("Connected to %s!", DB_DATABASE)
     except requests.exceptions.ConnectionError:
-        logging.info('InfluxDB is not reachable. Waiting 5 seconds to retry.')
+        logging.warning('InfluxDB is not reachable. Waiting 5 seconds to retry.')
         time.sleep(5)
     else:
         CONNECTED = True
@@ -103,8 +103,7 @@ def add_measures(measures):
                 }
             }
         points.append(point)
-        #if measure=='EASF01':
-        #   print(measure+":"+str(value).strip())
+        logging.debug(measure+":"+str(value).strip())
 
     CLIENT.write_points(points)
 
