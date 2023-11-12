@@ -15,4 +15,4 @@ RUN apt-get update && \
 COPY root /
 WORKDIR /
 
-CMD ["python3", "-u", "/arkteos/arkteos.py"]
+#CMD ["python3", "-u", "/arkteos/arkteos.py"]
