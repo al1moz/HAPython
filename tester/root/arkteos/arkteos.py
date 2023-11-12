@@ -19,6 +19,8 @@ MQTT_PORT = 1883
 USERNAME = 'mqtt'
 PASSWORD = os.environ.get('PASSWORDMQTT')
 
+logging.basicConfig(level=logging.DEBUG)
+
 decoder = [
     { 'stream' : 227, 'name' : 'primaire_pression' ,'descr' : 'Pression eau primaire', 'byte1': 62, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
     { 'stream' : 227, 'name' : 'externe_pression' ,'descr' : 'Pression eau extérieure', 'byte1': 46, 'weight1': 1, 'byte2': 0, 'weight2': 0, 'divider': 10 },
@@ -38,6 +40,8 @@ def main():
         163 : False, 
         227 : False 
     }
+
+
 
     mqtt_client = mqtt.Client('arkteos.py')
     mqtt_client.username_pw_set(USERNAME, PASSWORD)
@@ -75,7 +79,7 @@ def main():
             else :
                 item_value=(data[item['byte1']]*item['weight1']+data[item['byte2']]*item['weight2'])/item['divider']
             #print('%s:%.1f, ' % (item['name'], item_value),end='')
-            logging.info(datetime.utcnow().strftime("%H:%M:%S"),':',MQTT_BASE_TOPIC + item['name'],':', item_value)
+            logging.debug(datetime.utcnow().strftime("%H:%M:%S")+':'+MQTT_BASE_TOPIC + item['name']+':%.1f',item_value)
             mqtt_client.publish(MQTT_BASE_TOPIC + item['name'], item_value)
         #print('')
 

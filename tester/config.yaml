@@ -1,7 +1,7 @@
 
 ---
 name: HAPython-Test
-version: "0.0.0.2"
+version: "0.0.0.3"
 slug: hapython-test
 description: Python Tester Add-ons
 url: https://github.com/al1moz/HAPython/tester
