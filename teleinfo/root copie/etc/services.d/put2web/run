@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.info "Running Put2Web addon"
+
+exec python3 /put2web/put2web.py
