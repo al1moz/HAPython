@@ -14,3 +14,5 @@ RUN apt-get update && \
 #RUN pip install pyserial influxdb paho.mqtt
 COPY root /
 WORKDIR /
+
+CMD ["python3", "-u", "/arkteos/arkteos.py"]

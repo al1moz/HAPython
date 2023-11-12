@@ -1,5 +1,0 @@
-#!/usr/bin/with-contenv bashio
-
-bashio::log.info "Running Arkteos addon"
-
-exec python3 -u /arkteos/arkteos.py
