@@ -5,6 +5,7 @@ import logging
 from influxdb import InfluxDBClient
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
+from datetime import datetime
 
 print("Put2Web starting..")
 
@@ -94,7 +95,7 @@ def main():
     try:
         print('cindex='+cindex+'&q1='+q1+'&q2='+q2+'&q3='+q3+'&q4='+q4+'&q5='+q5+'&q6='+q6+'&q7='+q7+'&q8='+q8)
         req = urlopen('https://conso.ctrl.ovh/bin/receiver.php?cindex='+cindex+'&q1='+q1+'&q2='+q2+'&q3='+q3+'&q4='+q4+'&q5='+q5+'&q6='+q6+'&q7='+q7+'&q8='+q8, data=None)
-        print(req.read())
+        print(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")+' : '+req.read())
     except HTTPError as e:
         # do something
         print('Error code: ', e.code)

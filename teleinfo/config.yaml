@@ -1,7 +1,7 @@
 
 ---
 name: HAPython TeleInfo
-version: "0.0.1.9"
+version: "0.0.2.0"
 slug: hapython-teleinfo
 description: Python Téléinfo Add-ons
 url: https://github.com/al1moz/HAPython/teleinfo
