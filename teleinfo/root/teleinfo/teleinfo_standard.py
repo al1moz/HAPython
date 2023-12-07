@@ -167,7 +167,14 @@ def main():
         line = ser.readline()
         while True:
             logging.debug(line)
-            line_str = line.decode("utf-8")
+            
+            try:
+                line_str = line.decode("utf-8")
+            except serial.serialutil.SerialException:
+                logging.info("Err decode")
+                ser.close()
+                ser.open()
+
             ar_split = line_str.split("\t") # separation sur tabulation
             try:
                 key = ar_split[0]
