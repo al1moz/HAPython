@@ -1,10 +1,10 @@
 
 ---
-name: HAPython TeleInfo
-version: "0.0.2.2"
-slug: hapython-teleinfo
-description: Python Téléinfo Add-ons
-url: https://github.com/al1moz/HAPython/teleinfo
+name: HAPython Mycron
+version: "0.0.1.0"
+slug: hapython-mycron
+description: Python Crontab Add-ons
+url: https://github.com/al1moz/HAPython/mycron
 codenotary: notary@home-assistant.io
 init: false
 arch:
@@ -17,8 +17,8 @@ host_network: true
 devices:
   - /dev/ttyUSB1:/dev/ttyUSB1
 options:
-  port_usb: "/dev/ttyUSB1"
+  password_mqtt: ""
 schema:
-  port_usb: str
+  password_mqtt: password
 map:
   - config:rw
