@@ -1,7 +1,7 @@
 
 ---
 name: HAPython TeleInfo
-version: "0.0.2.3"
+version: "0.0.2.4"
 slug: hapython-teleinfo
 description: Python Téléinfo Add-ons
 url: https://github.com/al1moz/HAPython/teleinfo
@@ -16,6 +16,7 @@ arch:
 host_network: true
 devices:
   - /dev/ttyUSB1:/dev/ttyUSB1
+  - /dev/ttyUSB0:/dev/ttyUSB0
 options:
   port_usb: "/dev/ttyUSB1"
 schema:
