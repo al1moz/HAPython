@@ -5,6 +5,7 @@ bashio::log.info "Running arkteos addon"
 # Declare variables
 declare password_mqtt
 declare log_level
+declare host_arkteos
 
 # Get all arguments
 password_mqtt=$(bashio::config 'password_mqtt')
@@ -12,5 +13,8 @@ export PASSWORDMQTT="${password_mqtt}"
 
 log_level=$(bashio::config 'log_level')
 export LOGLEVEL="${log_level}"
+
+host_arkteos=$(bashio::config 'host_arkteos')
+export ARKHOST="${host_arkteos}"
 
 exec python3 /arkteos/arkteos.py

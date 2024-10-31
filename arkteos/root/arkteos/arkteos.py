@@ -12,7 +12,7 @@ from datetime import datetime
 from influxdb import InfluxDBClient
 from paho.mqtt import client as mqtt_client
 
-HOST = '192.168.252.152'
+HOST = os.environ.get('ARKHOST')
 PORT = 9641
 
 MQTT_BASE_TOPIC = "arkteos/reg3/"   # don't forget the trailing slash

@@ -1,7 +1,7 @@
 
 ---
 name: HAPython-Arkteos
-version: "0.0.1.0"
+version: "0.0.1.1"
 slug: hapython-arkteos
 description: Python Arkteos Add-ons
 url: https://github.com/al1moz/HAPython/arkteos
@@ -20,9 +20,11 @@ options:
   log_level: info
   port_usb: "/dev/ttyUSB1"
   password_mqtt: ""
+  host_arkteos: "192.168.252.72"
 schema:
   log_level: list(debug|info|warning)
   port_usb: str
   password_mqtt: password
+  host_arkteos: str
 map:
   - config:rw
