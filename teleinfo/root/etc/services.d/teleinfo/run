@@ -8,6 +8,7 @@ declare token_influxdb
 
 # Get all arguments
 port_usb=$(bashio::config 'port_usb')
+token_influxdb=$(bashio::config 'token_influxdb')
 export USBPORT="${port_usb}"
 export TOKENDB="${token_influxdb}"
 
