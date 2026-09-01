@@ -62,13 +62,24 @@ DB_PORT = TELEINFO_DATA['influxdb_port']
 DB_DATABASE = TELEINFO_DATA['influxdb_database']
 
 USBPORT = os.environ.get('USBPORT')
+DB_TOKEN = os.environ.get('TOKENDB')
 
 # création du logguer
 #logging.basicConfig(filename=LOGFOLDER + LOGFILE,level=logging.INFO, format='%(asctime)s %(message)s')
 logging.info("Teleinfo starting..")
 
 # connexion a la base de données InfluxDB
-CLIENT = InfluxDBClient(DB_SERVER, DB_PORT)
+#CLIENT = InfluxDBClient(DB_SERVER, DB_PORT)
+CLIENT = InfluxDBClient(
+    host=DB_SERVER,
+    port=DB_PORT,
+    username='dummy',     
+    password=DB_TOKEN,     
+    database=DB_DATABASE,
+    ssl=False,           
+    verify_ssl=False
+)
+
 CONNECTED = False
 while not CONNECTED:
     try:

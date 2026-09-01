@@ -4,9 +4,11 @@ bashio::log.info "Running teleinfo addon"
 
 # Declare variables
 declare port_usb
+declare token_influxdb
 
 # Get all arguments
 port_usb=$(bashio::config 'port_usb')
 export USBPORT="${port_usb}"
+export TOKENDB="${token_influxdb}"
 
 exec python3 /teleinfo/teleinfo_standard.py

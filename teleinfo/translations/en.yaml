@@ -7,3 +7,7 @@ configuration:
     name: Port USB
     description: >-
       Port USB pour le téléinfo.
+  token_influxdb:
+    name: Token
+    description: >-
+      Votre token InfluxDB v2.
