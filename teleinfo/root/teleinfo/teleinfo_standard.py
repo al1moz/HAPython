@@ -1,245 +1,570 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# __author__ = "Sébastien Reuiller"
-# __licence__ = "Apache License 2.0"
-"""Send teleinfo standard to influxdb."""
+"""Send teleinfo standard to InfluxDB 2.x."""
 
-# Python 3, prerequis : pip3 install -r requirements.txt
-#
-# Exemple de trame:
-# {
-#  'BASE': '123456789'       # Index heure de base en Wh
-#  'OPTARIF': 'HC..',        # Option tarifaire HC/BASE
-#  'IMAX': '007',            # Intensité max
-#  'HCHC': '040177099',      # Index heure creuse en Wh
-#  'IINST': '005',           # Intensité instantanée en A
-#  'PAPP': '01289',          # Puissance Apparente, en VA
-#  'MOTDETAT': '000000',     # Mot d'état du compteur
-#  'HHPHC': 'A',             # Horaire Heures Pleines Heures Creuses
-#  'ISOUSC': '45',           # Intensité souscrite en A
-#  'ADCO': '000000000000',   # Adresse du compteur
-#  'HCHP': '035972694',      # index heure pleine en Wh
-#  'PTEC': 'HP..'            # Période tarifaire en cours
-# }
-
-import os
-import sys
 import logging
-import time
+import os
 import pathlib
-from datetime import datetime
+import sys
+import time
 from configparser import ConfigParser
-import requests
+from datetime import datetime, timezone
+
 import serial
-from influxdb import InfluxDBClient
-MODE = "DEBUG"  # DEBUG, INFO
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 
-# clés téléinfo
-CHAR_MEASURE_KEYS = ['DATE', 'NGTF', 'LTARF', 'MSG1', 'NJOURF', 'NJOURF+1',
-                     'PJOURF', 'PJOURF+1', 'EASD02', 'STGE', 'RELAIS']
 
-#LOGFOLDER = "/app/log"
-#LOGFILE = "releve.log"
+# ============================================================
+# Configuration
+# ============================================================
+
+MODE = "DEBUG"
+
 TELEINFO_INI = "/teleinfo/teleinfo.ini"
 KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
-DICO_FILE = "/teleinfo/liste_fabriquants_linky.txt"
+DICO_FILE = "/teleinfo/liste_fabricants_linky.txt"
 
-# Check if log folder exist
-#if not pathlib.Path(LOGFOLDER).exists():
-#    os.mkdir(LOGFOLDER)
+# Définir dans les variables d'environnement.
+ORG = "hataden"
+INFLUX_URL = os.environ.get("URLDB")
+DB_TOKEN = os.environ.get("TOKENDB")
 
-if not pathlib.Path(TELEINFO_INI).exists():
-    print("Ini {} not found!".format(TELEINFO_INI))
+if not DB_TOKEN:
+    print("Erreur : la variable d'environnement TOKENDB est absente.")
     sys.exit(1)
 
-# Read teleinfo.ini
+
+# ============================================================
+# Vérification configuration
+# ============================================================
+
+if not pathlib.Path(TELEINFO_INI).exists():
+    print(f"Ini {TELEINFO_INI} not found!")
+    sys.exit(1)
+
+
 CONFIG = ConfigParser()
 CONFIG.read(TELEINFO_INI)
-TELEINFO_DATA = CONFIG['teleinfo']
-SERIALPORT = TELEINFO_DATA['serial_port']
-DB_SERVER = TELEINFO_DATA['influxdb_server']
-DB_PORT = TELEINFO_DATA['influxdb_port']
-DB_DATABASE = TELEINFO_DATA['influxdb_database']
 
-USBPORT = os.environ.get('USBPORT')
-DB_TOKEN = os.environ.get('TOKENDB')
+if "teleinfo" not in CONFIG:
+    print("Erreur : section [teleinfo] absente du fichier ini.")
+    sys.exit(1)
 
-# création du logguer
-#logging.basicConfig(filename=LOGFOLDER + LOGFILE,level=logging.INFO, format='%(asctime)s %(message)s')
-logging.info("Teleinfo starting..")
+TELEINFO_DATA = CONFIG["teleinfo"]
 
-# connexion a la base de données InfluxDB
-#CLIENT = InfluxDBClient(DB_SERVER, DB_PORT)
-CLIENT = InfluxDBClient(
-    host=DB_SERVER,
-    port=DB_PORT,
-    username='dummy',     
-    password=DB_TOKEN,     
-    database=DB_DATABASE,
-    ssl=False,           
-    verify_ssl=False
+SERIALPORT = os.environ.get(
+    "USBPORT",
+    TELEINFO_DATA.get("serial_port", "")
 )
 
-CONNECTED = False
-while not CONNECTED:
+# Avec InfluxDB 2.x, DB_DATABASE correspond en pratique
+# au nom du bucket.
+BUCKET = TELEINFO_DATA.get("influxdb_database", "")
+
+if not SERIALPORT:
+    print("Erreur : port série non configuré.")
+    sys.exit(1)
+
+if not BUCKET:
+    print("Erreur : influxdb_database non configuré.")
+    sys.exit(1)
+
+
+# ============================================================
+# Logging
+# ============================================================
+
+logging.basicConfig(
+    level=getattr(logging, MODE, logging.DEBUG),
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+
+logging.info("Teleinfo starting...")
+logging.info("Port série : %s", SERIALPORT)
+logging.info("InfluxDB : %s", INFLUX_URL)
+logging.info("Organisation : %s", ORG)
+logging.info("Bucket : %s", BUCKET)
+
+
+# ============================================================
+# Client InfluxDB 2.x
+# ============================================================
+
+CLIENT = InfluxDBClient(
+    url=INFLUX_URL,
+    token=DB_TOKEN,
+    org=ORG,
+)
+
+WRITE_API = CLIENT.write_api(write_options=SYNCHRONOUS)
+
+
+def test_influx_connection():
+    """Teste la connexion à InfluxDB."""
     try:
-        logging.info("Database %s exists?", DB_DATABASE)
-        if {'name': DB_DATABASE} not in CLIENT.get_list_database():
-            logging.info("Database %s creation..", DB_DATABASE)
-            CLIENT.create_database(DB_DATABASE)
-            logging.info("Database %s created!", DB_DATABASE)
-        CLIENT.switch_database(DB_DATABASE)
-        logging.info("Connected to %s!", DB_DATABASE)
-    except requests.exceptions.ConnectionError:
-        logging.warning('InfluxDB is not reachable. Waiting 5 seconds to retry.')
-        time.sleep(5)
-    else:
-        CONNECTED = True
+        health = CLIENT.health()
+
+        if health.status != "pass":
+            logging.error(
+                "InfluxDB indisponible : %s",
+                health.message
+            )
+            return False
+
+        logging.info(
+            "InfluxDB connecté : version %s",
+            health.version
+        )
+
+        # Vérification que le bucket existe
+        buckets = CLIENT.buckets_api().find_buckets().buckets
+
+        bucket_names = [bucket.name for bucket in buckets]
+
+        if BUCKET not in bucket_names:
+            logging.error(
+                "Le bucket '%s' n'existe pas.",
+                BUCKET
+            )
+            logging.error(
+                "Crée le bucket dans InfluxDB avant de lancer le script."
+            )
+            return False
+
+        logging.info("Bucket '%s' trouvé.", BUCKET)
+
+        return True
+
+    except Exception:
+        logging.exception("Impossible de contacter InfluxDB.")
+        return False
+
+
+# ============================================================
+# Téléinfo
+# ============================================================
+
+CHAR_MEASURE_KEYS = [
+    "DATE",
+    "NGTF",
+    "LTARF",
+    "MSG1",
+    "NJOURF",
+    "NJOURF+1",
+    "PJOURF",
+    "PJOURF+1",
+    "EASD02",
+    "STGE",
+    "RELAIS",
+]
 
 
 def add_measures(measures):
-    """Add measures to array."""
-    points = []
-    for measure, value in measures.items():
-        point = {
-            "measurement": measure,
-            "tags": {
-                # identification de la sonde et du compteur
-                "host": "raspberry",
-                "region": "linky"
-            },
-            "time": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "fields": {
-                "value": value
-                }
-            }
-        points.append(point)
-        logging.debug(measure+":"+str(value).strip())
+    """Envoie une trame complète dans InfluxDB."""
 
-    CLIENT.write_points(points)
+    points = []
+
+    for measure, value in measures.items():
+
+        # InfluxDB ne permet pas certains noms de mesure/champs
+        # problématiques. On garde ici le nom Teleinfo.
+        point = (
+            Point(str(measure))
+            .tag("host", "raspberry")
+            .tag("region", "linky")
+            .field("value", value)
+            .time(datetime.now(timezone.utc), WritePrecision.S)
+        )
+
+        points.append(point)
+
+        logging.debug(
+            "Mesure : %s = %s",
+            measure,
+            value
+        )
+
+    if not points:
+        return
+
+    try:
+        WRITE_API.write(
+            bucket=BUCKET,
+            org=ORG,
+            record=points
+        )
+
+        logging.debug(
+            "%d mesures envoyées à InfluxDB.",
+            len(points)
+        )
+
+    except Exception:
+        logging.exception(
+            "Erreur lors de l'écriture dans InfluxDB."
+        )
 
 
 def verif_checksum(line_str, checksum):
-    """Check data checksum."""
-    data_unicode = 0
-    data = line_str[0:-2] #chaine sans checksum de fin
-    for caractere in data:
-        data_unicode += ord(caractere)
+    """Vérifie le checksum d'une ligne Teleinfo."""
+
+    data = line_str[0:-2]
+
+    data_unicode = sum(ord(caractere) for caractere in data)
+
     sum_unicode = (data_unicode & 63) + 32
     sum_chain = chr(sum_unicode)
-    return bool(checksum == sum_chain)
+
+    return checksum == sum_chain
 
 
-def keys_from_file(file):
-    """Get keys from file."""
+def keys_from_file(filename):
+    """Charge les clés Teleinfo depuis un fichier."""
+
     labels = []
-    #"available_linky_standard_keys.txt"
-    with open(file) as keys_file:
-        for line in keys_file:
-            information = line.split("\t")
-            labels.append(information[1])
+
+    try:
+        with open(filename, encoding="utf-8") as keys_file:
+            for line in keys_file:
+                line = line.strip()
+
+                if not line:
+                    continue
+
+                information = line.split("\t")
+
+                if len(information) >= 2:
+                    labels.append(information[1])
+
+    except OSError:
+        logging.exception(
+            "Impossible de lire le fichier %s",
+            filename
+        )
+        sys.exit(1)
+
     return labels
 
 
-def dico_from_file(file):
-    """Get info from file."""
+def dico_from_file(filename):
+    """Charge le dictionnaire des fabricants Linky."""
+
     information = {}
-    with open(file) as dico_file:
-        for line in dico_file:
-            line = line.replace("\n", "")
-            decoupage = line.split("\t")
-            code_fabricant = int(decoupage[0])
-            nom_fabricant = decoupage[1]
-            information[code_fabricant] = nom_fabricant
+
+    try:
+        with open(filename, encoding="utf-8") as dico_file:
+            for line in dico_file:
+                line = line.strip()
+
+                if not line:
+                    continue
+
+                decoupage = line.split("\t")
+
+                if len(decoupage) < 2:
+                    continue
+
+                try:
+                    code_fabricant = int(decoupage[0])
+                except ValueError:
+                    continue
+
+                nom_fabricant = decoupage[1]
+
+                information[code_fabricant] = nom_fabricant
+
+    except OSError:
+        logging.exception(
+            "Impossible de lire le fichier %s",
+            filename
+        )
+        sys.exit(1)
+
     return information
 
 
+# ============================================================
+# Traitement d'une trame
+# ============================================================
+
+def process_trame(trame, liste_fabricants):
+    """Complète et envoie une trame Teleinfo."""
+
+    if not trame:
+        return
+
+    # --------------------------------------------------------
+    # Fabricant
+    # --------------------------------------------------------
+
+    numero_compteur = str(trame.get("ADSC", ""))
+
+    if len(numero_compteur) >= 4:
+        try:
+            id_fabricant = int(numero_compteur[2:4])
+
+            if id_fabricant in liste_fabricants:
+                trame["OEM"] = liste_fabricants[id_fabricant]
+            else:
+                trame["OEM"] = "UNKNOWN"
+
+        except ValueError:
+            trame["OEM"] = "UNKNOWN"
+    else:
+        trame["OEM"] = "UNKNOWN"
+
+
+    # --------------------------------------------------------
+    # Calcul CosPhi
+    # --------------------------------------------------------
+
+    irms1 = trame.get("IRMS1")
+    urms1 = trame.get("URMS1")
+    sinsts = trame.get("SINSTS")
+
+    if (
+        isinstance(irms1, (int, float))
+        and isinstance(urms1, (int, float))
+        and isinstance(sinsts, (int, float))
+        and irms1 > 0
+        and urms1 > 0
+    ):
+        trame["COSPHI"] = sinsts / (irms1 * urms1)
+
+        logging.debug(
+            "COSPHI = %.4f",
+            trame["COSPHI"]
+        )
+
+
+    # --------------------------------------------------------
+    # Timestamp Unix
+    # --------------------------------------------------------
+
+    trame["timestamp"] = int(time.time())
+
+
+    # --------------------------------------------------------
+    # Envoi InfluxDB
+    # --------------------------------------------------------
+
+    add_measures(trame)
+
+
+# ============================================================
+# Lecture port série
+# ============================================================
+
 def main():
-    """Main function to read teleinfo."""
-    with serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_EVEN,
-                       stopbits=serial.STOPBITS_ONE,
-                       bytesize=serial.SEVENBITS, timeout=1) as ser:
-        # stopbits=serial.STOPBITS_ONE,
-        logging.info("Teleinfo is reading on ",USBPORT)
-        logging.info("Mode standard")
+    """Lit les trames Teleinfo."""
 
-        labels_linky = keys_from_file(KEYS_FILE)
-        liste_fabriquants = dico_from_file(DICO_FILE)
-        #liste_modeles = keys_from_file("/opt/teleinfo-linky-with-raspberry/modeles_linky.txt")
+    labels_linky = keys_from_file(KEYS_FILE)
+    liste_fabricants = dico_from_file(DICO_FILE)
 
-        trame = dict()
+    logging.info(
+        "%d clés Teleinfo chargées.",
+        len(labels_linky)
+    )
 
-        # boucle pour partir sur un début de trame
-        line = ser.readline()
-        while b'\x02' not in line:  # recherche du caractère de début de trame
-            line = ser.readline()
-        
-        # lecture de la première ligne de la première trame
-        line = ser.readline()
+    logging.info(
+        "%d fabricants chargés.",
+        len(liste_fabricants)
+    )
+
+    try:
+        ser = serial.Serial(
+            port=SERIALPORT,
+            baudrate=9600,
+            parity=serial.PARITY_EVEN,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.SEVENBITS,
+            timeout=1
+        )
+
+    except serial.SerialException:
+        logging.exception(
+            "Impossible d'ouvrir le port série %s",
+            SERIALPORT
+        )
+        sys.exit(1)
+
+
+    logging.info(
+        "Teleinfo reading on %s",
+        SERIALPORT
+    )
+
+    logging.info("Mode standard")
+
+
+    with ser:
+
+        trame = {}
+
+        # ----------------------------------------------------
+        # Recherche du début de trame
+        # ----------------------------------------------------
+
+        logging.info("Recherche du début de trame...")
+
         while True:
-            logging.debug(line)
-            
-            try:
-                line_str = line.decode("utf-8")
-            except serial.serialutil.SerialException:
-                logging.info("Err decode")
-                ser.close()
-                ser.open()
 
-            ar_split = line_str.split("\t") # separation sur tabulation
-            try:
-                key = ar_split[0]
-                #checksum = ar[-1] #dernier caractere
-                #verification = verif_checksum(line_str,checksum)
-                #logging.debug("verification checksum :  s%" % str(verification))
-
-                if key in labels_linky:
-                    # typer les valeurs connus sous forme de chaines en "string"
-                    if key in CHAR_MEASURE_KEYS:
-                        value = ar_split[-2]
-                    else:
-                        try:
-                            value = int(ar_split[-2])   # typer les autres valeurs en "integer"
-                        except Exception:
-                            logging.info("erreur de conversion en nombre entier")
-                            value = 0
-
-                    trame[key] = value   # creation du champ pour la trame en cours
-                else:
-                    trame['verification_error'] = "1"
-                    logging.debug("erreur etiquette inconnue")
-
-                if b'\x03' in line:  # si caractère de fin de trame, on insère la trame dans influx
-                    time_measure = time.time()
-
-                    # ajout nom fabriquant
-                    numero_compteur = str(trame['ADSC'])
-                    id_fabriquant = int(numero_compteur[2:4])
-                    trame['OEM'] = liste_fabriquants[id_fabriquant]
-                    #logging.info("fabriquant:"+trame['OEM'])
-
-                    # ajout du CosPhi calculé
-                    if (trame["IRMS1"] and trame["URMS1"] and trame["SINSTS"]):
-                        trame["COSPHI"] = (trame["SINSTS"] / (trame["IRMS1"] * trame["URMS1"]))
-                    logging.debug(trame["COSPHI"])
-                    # ajout timestamp pour debugger
-                    trame["timestamp"] = int(time_measure)
-
-                    # insertion dans influxdb
-                    add_measures(trame)
-                    #print("exit")
-                    time.sleep(5)
-                    #sys.exit(0)
-                    #logging.debug(trame)
-
-                    trame = dict()  # on repart sur une nouvelle trame
-            except Exception:
-                logging.debug("erreur traitement etiquette: %s", key)
-                #logging.error("Exception : %s" % e, exc_info=True)
-                #logging.error("Ligne brut: %s \n" % line)
             line = ser.readline()
 
+            if not line:
+                continue
 
-if __name__ == '__main__':
-    if CONNECTED:
+            if b"\x02" in line:
+                logging.debug("Début de trame trouvé.")
+                break
+
+
+        # ----------------------------------------------------
+        # Lecture permanente
+        # ----------------------------------------------------
+
+        while True:
+
+            line = ser.readline()
+
+            if not line:
+                continue
+
+            logging.debug(
+                "Ligne brute : %r",
+                line
+            )
+
+            # ------------------------------------------------
+            # Décodage
+            # ------------------------------------------------
+
+            try:
+                line_str = line.decode(
+                    "utf-8",
+                    errors="replace"
+                ).strip("\r\n")
+
+            except UnicodeDecodeError:
+                logging.warning(
+                    "Erreur de décodage : %r",
+                    line
+                )
+                continue
+
+
+            # ------------------------------------------------
+            # Début de trame
+            # ------------------------------------------------
+
+            if "\x02" in line_str:
+                trame = {}
+                continue
+
+
+            # ------------------------------------------------
+            # Fin de trame
+            # ------------------------------------------------
+
+            if "\x03" in line_str:
+
+                logging.debug(
+                    "Fin de trame : %s",
+                    trame
+                )
+
+                process_trame(
+                    trame,
+                    liste_fabricants
+                )
+
+                trame = {}
+
+                time.sleep(5)
+
+                continue
+
+
+            # ------------------------------------------------
+            # Ligne Teleinfo
+            # ------------------------------------------------
+
+            ar_split = line_str.split("\t")
+
+            if len(ar_split) < 2:
+                continue
+
+            key = ar_split[0].strip()
+
+            if key not in labels_linky:
+                logging.debug(
+                    "Étiquette inconnue : %s",
+                    key
+                )
+                continue
+
+
+            # ------------------------------------------------
+            # Valeur
+            # ------------------------------------------------
+
+            if len(ar_split) >= 2:
+                value_str = ar_split[-2].strip()
+            else:
+                continue
+
+
+            if key in CHAR_MEASURE_KEYS:
+
+                value = value_str
+
+            else:
+
+                try:
+                    value = int(value_str)
+
+                except ValueError:
+
+                    logging.debug(
+                        "Valeur non numérique pour %s : %s",
+                        key,
+                        value_str
+                    )
+
+                    value = 0
+
+
+            trame[key] = value
+
+
+# ============================================================
+# Programme principal
+# ============================================================
+
+if __name__ == "__main__":
+
+    try:
+
+        if not test_influx_connection():
+            sys.exit(1)
+
         main()
+
+    except KeyboardInterrupt:
+
+        logging.info("Arrêt demandé.")
+
+    except Exception:
+
+        logging.exception(
+            "Erreur fatale."
+        )
+
+    finally:
+
+        try:
+            WRITE_API.close()
+            CLIENT.close()
+        except Exception:
+            pass

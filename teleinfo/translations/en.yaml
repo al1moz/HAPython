@@ -11,3 +11,7 @@ configuration:
     name: Token
     description: >-
       Votre token InfluxDB v2.
+  url_influxdb:
+    name: URL
+    description: >-
+      L'URL InfluxDB
