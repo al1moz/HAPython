@@ -846,10 +846,11 @@ def main():
                 # Trame complète
                 # --------------------------------------------------
 
-                logging.info(
-                    "Fin de trame : %d champs",
-                    len(trame)
-                )
+                if MODE != "PRODUCTION":
+                    logging.info(
+                        "Fin de trame : %d champs",
+                        len(trame)
+                    )
 
 
                 process_trame(
