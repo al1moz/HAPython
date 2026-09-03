@@ -23,7 +23,7 @@ MODE = "DEBUG"
 
 TELEINFO_INI = "/teleinfo/teleinfo.ini"
 KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
-DICO_FILE = "/teleinfo/liste_fabricants_linky.txt"
+DICO_FILE = "/teleinfo/liste_fabriquants_linky.txt"
 
 # Définir dans les variables d'environnement.
 ORG = "hataden"
