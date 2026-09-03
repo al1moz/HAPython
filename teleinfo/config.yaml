@@ -1,7 +1,7 @@
 
 ---
 name: HAPython TeleInfo
-version: "0.0.3.7"
+version: "0.0.3.8"
 slug: hapython-teleinfo
 description: Python Téléinfo Add-ons
 url: https://github.com/al1moz/HAPython/teleinfo
@@ -22,9 +22,13 @@ options:
   port_usb: "/dev/ttyUSB21"
   token_influxdb: ""
   url_influxdb: "http://192.168.x.x:8086"
+  debug_mode: "INFO"
+  influx_org: "hataden"
 schema:
   port_usb: str
   token_influxdb: str
   url_influxdb: str
+  debug_mode: str
+  influx_org: str
 map:
   - config:rw

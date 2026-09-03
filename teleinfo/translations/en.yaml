@@ -15,3 +15,11 @@ configuration:
     name: URL
     description: >-
       L'URL InfluxDB
+  influx_org:
+    name: Organisme
+    description: >-
+      Le nom de l'organisme InfluxDB
+  debug_mode:
+    name: Mode Debug
+    description: >-
+      DEBUG/INFO/PRODUCTION    

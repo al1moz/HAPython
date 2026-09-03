@@ -20,14 +20,14 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 # CONFIGURATION
 # ============================================================
 
-MODE = "INFO" # DEBUG/INFO
+MODE = os.environ.get("debug_mode")
 
 TELEINFO_INI = "/teleinfo/teleinfo.ini"
 KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
 DICO_FILE = "/teleinfo/liste_fabriquants_linky.txt"
 
 # Définir dans les variables d'environnement.
-INFLUX_ORG = "hataden"
+INFLUX_ORG = os.environ.get("INFLUX_ORG")
 INFLUX_URL = os.environ.get("URLDB")
 DB_TOKEN = os.environ.get("TOKENDB")
 
@@ -453,10 +453,11 @@ def process_trame(
         return
 
 
-    logging.info(
-        "Traitement d'une trame avec %d champs",
-        len(trame)
-    )
+    if MODE != "PRODUCTION":
+        logging.info(
+            "Traitement d'une trame avec %d champs",
+            len(trame)
+        )
 
 
     # --------------------------------------------------------
@@ -535,10 +536,11 @@ def process_trame(
     # Envoi InfluxDB
     # --------------------------------------------------------
 
-    logging.info(
-        "Envoi de %d mesures vers InfluxDB...",
-        len(trame)
-    )
+    if MODE != "PRODUCTION":
+        logging.info(
+            "Envoi de %d mesures vers InfluxDB...",
+            len(trame)
+        )
 
 
     add_measures(trame)
@@ -623,10 +625,11 @@ def add_measures(measures):
         )
 
 
-        logging.info(
-            "SUCCÈS : %d points écrits dans InfluxDB",
-            len(points)
-        )
+        if MODE != "PRODUCTION":
+            logging.info(
+                "SUCCÈS : %d points écrits dans InfluxDB",
+                len(points)
+            )
 
 
     except Exception:
@@ -1410,10 +1413,12 @@ def main():
 
                 if fin_trame:
 
-                    logging.info(
-                        "Fin de trame : %d champs",
-                        len(trame)
-                    )
+
+                    if MODE != "PRODUCTION":
+                        logging.info(
+                            "Fin de trame : %d champs",
+                            len(trame)
+                        )
 
                     logging.debug(
                         "Trame complète : %s",
