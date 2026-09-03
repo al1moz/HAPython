@@ -337,10 +337,11 @@ def process_teleinfo_line(
         return
 
 
-    logging.debug(
-        "Ligne Teleinfo : %s",
-        line_str
-    )
+    if MODE != "PRODUCTION":
+        logging.debug(
+            "Ligne Teleinfo : %s",
+            line_str
+        )
 
 
     # --------------------------------------------------------
@@ -362,11 +363,11 @@ def process_teleinfo_line(
     # --------------------------------------------------------
 
     if key not in labels_linky:
-
-        logging.debug(
-            "Étiquette inconnue : %s",
-            key
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "Étiquette inconnue : %s",
+                key
+            )
 
         return
 
@@ -415,11 +416,12 @@ def process_teleinfo_line(
 
         except ValueError:
 
-            logging.debug(
-                "Valeur non numérique : %s = %r",
-                key,
-                value_str
-            )
+            if MODE != "PRODUCTION":
+                logging.debug(
+                    "Valeur non numérique : %s = %r",
+                    key,
+                    value_str
+                )
 
             value = 0
 
@@ -427,11 +429,12 @@ def process_teleinfo_line(
     trame[key] = value
 
 
-    logging.debug(
-        "Champ : %s = %r",
-        key,
-        value
-    )
+    if MODE != "PRODUCTION":
+        logging.debug(
+            "Champ : %s = %r",
+            key,
+            value
+        )
 
 
 # ============================================================
@@ -517,10 +520,11 @@ def process_trame(
             )
         )
 
-        logging.debug(
-            "COSPHI = %.4f",
-            trame["COSPHI"]
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "COSPHI = %.4f",
+                trame["COSPHI"]
+            )
 
 
     # --------------------------------------------------------
@@ -558,11 +562,12 @@ def add_measures(measures):
 
     for measure, value in measures.items():
 
-        logging.debug(
-            "InfluxDB : %s = %r",
-            measure,
-            value
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "InfluxDB : %s = %r",
+                measure,
+                value
+            )
 
 
         # ----------------------------------------------------
@@ -730,10 +735,11 @@ def main():
                 continue
 
 
-            logging.debug(
-                "Ligne brute : %r",
-                line
-            )
+            if MODE != "PRODUCTION":
+                logging.debug(
+                    "Ligne brute : %r",
+                    line
+                )
 
 
             # ------------------------------------------------
@@ -779,10 +785,10 @@ def main():
 
                     trame = {}
 
-
-                    logging.debug(
-                        "Début de trame"
-                    )
+                    if MODE != "PRODUCTION":
+                        logging.debug(
+                            "Début de trame"
+                        )
 
 
                     position = start + 1
@@ -1065,11 +1071,12 @@ def add_measures(measures):
 
         points.append(point)
 
-        logging.debug(
-            "Mesure : %s = %s",
-            measure,
-            value
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "Mesure : %s = %s",
+                measure,
+                value
+            )
 
     if not points:
         return
@@ -1081,10 +1088,11 @@ def add_measures(measures):
             record=points
         )
 
-        logging.debug(
-            "%d mesures envoyées à InfluxDB.",
-            len(points)
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "%d mesures envoyées à InfluxDB.",
+                len(points)
+            )
 
     except Exception:
         logging.exception(
@@ -1218,10 +1226,11 @@ def process_trame(trame, liste_fabricants):
     ):
         trame["COSPHI"] = sinsts / (irms1 * urms1)
 
-        logging.debug(
-            "COSPHI = %.4f",
-            trame["COSPHI"]
-        )
+        if MODE != "PRODUCTION":
+            logging.debug(
+                "COSPHI = %.4f",
+                trame["COSPHI"]
+            )
 
 
     # --------------------------------------------------------
@@ -1289,7 +1298,8 @@ def main():
             if not line:
                 continue
 
-            logging.debug("Ligne brute : %r", line)
+            if MODE != "PRODUCTION":
+                logging.debug("Ligne brute : %r", line)
 
             # ------------------------------------------------
             # Décodage
@@ -1330,7 +1340,8 @@ def main():
                     dans_trame = True
                     trame = {}
 
-                    logging.debug("Début de nouvelle trame")
+                    if MODE != "PRODUCTION":
+                        logging.debug("Début de nouvelle trame")
 
                 # Rien à traiter si on n'est pas encore dans une
                 # trame.
@@ -1395,17 +1406,19 @@ def main():
 
                             trame[key] = value
 
-                            logging.debug(
-                                "Champ : %s = %r",
-                                key,
-                                value
-                            )
+                            if MODE != "PRODUCTION":
+                                logging.debug(
+                                    "Champ : %s = %r",
+                                    key,
+                                    value
+                                )
 
                         else:
-                            logging.debug(
-                                "Étiquette inconnue : %s",
-                                key
-                            )
+                            if MODE != "PRODUCTION":
+                                logging.debug(
+                                    "Étiquette inconnue : %s",
+                                    key
+                                )
 
                 # ------------------------------------------------
                 # Fin de trame
@@ -1420,10 +1433,11 @@ def main():
                             len(trame)
                         )
 
-                    logging.debug(
-                        "Trame complète : %s",
-                        trame
-                    )
+                    if MODE != "PRODUCTION":
+                        logging.debug(
+                            "Trame complète : %s",
+                            trame
+                        )
 
                     process_trame(
                         trame,
