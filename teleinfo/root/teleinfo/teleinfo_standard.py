@@ -27,7 +27,7 @@ KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
 DICO_FILE = "/teleinfo/liste_fabriquants_linky.txt"
 
 # Définir dans les variables d'environnement.
-ORG = "hataden"
+INFLUX_ORG = "hataden"
 INFLUX_URL = os.environ.get("URLDB")
 DB_TOKEN = os.environ.get("TOKENDB")
 
