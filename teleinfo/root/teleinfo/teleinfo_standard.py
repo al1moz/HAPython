@@ -19,7 +19,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 # Configuration
 # ============================================================
 
-MODE = "DEBUG"
+MODE = "INFO" # DEBUG/INFO
 
 TELEINFO_INI = "/teleinfo/teleinfo.ini"
 KEYS_FILE = "/teleinfo/liste_champs_mode_standard.txt"
@@ -355,7 +355,6 @@ def process_trame(trame, liste_fabricants):
 # ============================================================
 # Lecture port série
 # ============================================================
-
 def main():
     """Lit les trames Teleinfo."""
 
@@ -389,25 +388,14 @@ def main():
         )
         sys.exit(1)
 
-
-    logging.info(
-        "Teleinfo reading on %s",
-        SERIALPORT
-    )
-
+    logging.info("Teleinfo reading on %s", SERIALPORT)
     logging.info("Mode standard")
 
+    trame = {}
+    dans_trame = False
 
     with ser:
 
-        trame = {}
-
-        # ----------------------------------------------------
-        # Recherche du début de trame
-        # ----------------------------------------------------
-
-        logging.info("Recherche du début de trame...")
-
         while True:
 
             line = ser.readline()
@@ -415,26 +403,7 @@ def main():
             if not line:
                 continue
 
-            if b"\x02" in line:
-                logging.debug("Début de trame trouvé.")
-                break
-
-
-        # ----------------------------------------------------
-        # Lecture permanente
-        # ----------------------------------------------------
-
-        while True:
-
-            line = ser.readline()
-
-            if not line:
-                continue
-
-            logging.debug(
-                "Ligne brute : %r",
-                line
-            )
+            logging.debug("Ligne brute : %r", line)
 
             # ------------------------------------------------
             # Décodage
@@ -444,7 +413,7 @@ def main():
                 line_str = line.decode(
                     "utf-8",
                     errors="replace"
-                ).strip("\r\n")
+                )
 
             except UnicodeDecodeError:
                 logging.warning(
@@ -453,90 +422,128 @@ def main():
                 )
                 continue
 
-
             # ------------------------------------------------
-            # Début de trame
-            # ------------------------------------------------
-
-            if "\x02" in line_str:
-                trame = {}
-                continue
-
-
-            # ------------------------------------------------
-            # Fin de trame
-            # ------------------------------------------------
-
-            if "\x03" in line_str:
-
-                logging.debug(
-                    "Fin de trame : %s",
-                    trame
-                )
-
-                process_trame(
-                    trame,
-                    liste_fabricants
-                )
-
-                trame = {}
-
-                time.sleep(5)
-
-                continue
-
-
-            # ------------------------------------------------
-            # Ligne Teleinfo
+            # Une ligne peut contenir :
+            #
+            #   \x03 = fin de trame
+            #   \x02 = début de trame
+            #
+            # et les deux peuvent être présents dans la même
+            # ligne :
+            #
+            #   PJOURF+1 ... \x03\x02
+            #
             # ------------------------------------------------
 
-            ar_split = line_str.split("\t")
+            morceaux = line_str.split("\x02")
 
-            if len(ar_split) < 2:
-                continue
+            for index, morceau in enumerate(morceaux):
 
-            key = ar_split[0].strip()
+                # Si on trouve \x02, on démarre une nouvelle trame.
+                if index > 0:
+                    dans_trame = True
+                    trame = {}
 
-            if key not in labels_linky:
-                logging.debug(
-                    "Étiquette inconnue : %s",
-                    key
-                )
-                continue
+                    logging.debug("Début de nouvelle trame")
 
+                # Rien à traiter si on n'est pas encore dans une
+                # trame.
+                if not dans_trame:
+                    continue
 
-            # ------------------------------------------------
-            # Valeur
-            # ------------------------------------------------
+                # ------------------------------------------------
+                # Vérification fin de trame
+                # ------------------------------------------------
 
-            if len(ar_split) >= 2:
-                value_str = ar_split[-2].strip()
-            else:
-                continue
+                fin_trame = "\x03" in morceau
 
+                if fin_trame:
+                    morceau = morceau.split("\x03", 1)[0]
 
-            if key in CHAR_MEASURE_KEYS:
+                # ------------------------------------------------
+                # Traitement de la ligne
+                # ------------------------------------------------
 
-                value = value_str
+                morceau = morceau.strip("\r\n")
 
-            else:
+                if morceau:
 
-                try:
-                    value = int(value_str)
+                    ar_split = morceau.split("\t")
 
-                except ValueError:
+                    if len(ar_split) >= 2:
 
-                    logging.debug(
-                        "Valeur non numérique pour %s : %s",
-                        key,
-                        value_str
+                        key = ar_split[0].strip()
+
+                        if key in labels_linky:
+
+                            # Dans une trame standard :
+                            #
+                            # KEY <TAB> VALUE <TAB> CHECKSUM
+                            #
+                            # Pour certains champs, il existe
+                            # plusieurs colonnes :
+                            #
+                            # SMAXSN <TAB> DATE <TAB> VALUE <TAB> CHECKSUM
+                            #
+                            if len(ar_split) >= 3:
+                                value_str = ar_split[-2].strip()
+                            else:
+                                value_str = ar_split[1].strip()
+
+                            # Champs texte
+                            if key in CHAR_MEASURE_KEYS:
+                                value = value_str
+
+                            else:
+                                try:
+                                    value = int(value_str)
+
+                                except ValueError:
+                                    logging.debug(
+                                        "Valeur non numérique : "
+                                        "%s = %r",
+                                        key,
+                                        value_str
+                                    )
+                                    value = 0
+
+                            trame[key] = value
+
+                            logging.debug(
+                                "Champ : %s = %r",
+                                key,
+                                value
+                            )
+
+                        else:
+                            logging.debug(
+                                "Étiquette inconnue : %s",
+                                key
+                            )
+
+                # ------------------------------------------------
+                # Fin de trame
+                # ------------------------------------------------
+
+                if fin_trame:
+
+                    logging.info(
+                        "Fin de trame : %d champs",
+                        len(trame)
                     )
 
-                    value = 0
+                    logging.debug(
+                        "Trame complète : %s",
+                        trame
+                    )
 
+                    process_trame(
+                        trame,
+                        liste_fabricants
+                    )
 
-            trame[key] = value
-
+                    trame = {}
+                    dans_trame = False
 
 # ============================================================
 # Programme principal

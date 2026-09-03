@@ -21,7 +21,7 @@ devices:
 options:
   port_usb: "/dev/ttyUSB21"
   token_influxdb: ""
-  url_influxdb: "http://192.198.x.x:8086"
+  url_influxdb: "http://192.168.x.x:8086"
 schema:
   port_usb: str
   token_influxdb: str
