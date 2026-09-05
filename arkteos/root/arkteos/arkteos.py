@@ -81,7 +81,10 @@ def connect_mqtt() -> mqtt_client:
         else:
             logging.warning("Failed to connect, return code %d\n", rc)
 
-    client = mqtt_client.Client(client_id)
+    client = mqtt_client.Client(
+        mqtt_client.CallbackAPIVersion.VERSION1,
+        client_id
+    )
     client.username_pw_set(USERNAME, PASSWORD)
     client.on_connect = on_connect
     client.connect(MQTT_HOST, MQTT_PORT)
