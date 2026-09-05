@@ -13,3 +13,15 @@ configuration:
   host_arkteos:
     name: Host Arkteos 
     description: Adresse IP Geothermie
+  token_influxdb:
+    name: Token
+    description: >-
+      Votre token InfluxDB v2.
+  url_influxdb:
+    name: URL
+    description: >-
+      L'URL InfluxDB
+  influx_org:
+    name: Organisme
+    description: >-
+      Le nom de l'organisme InfluxDB

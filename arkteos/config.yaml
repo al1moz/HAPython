@@ -1,7 +1,7 @@
 
 ---
 name: HAPython-Arkteos
-version: "0.0.1.1"
+version: "0.0.1.2"
 slug: hapython-arkteos
 description: Python Arkteos Add-ons
 url: https://github.com/al1moz/HAPython/arkteos
@@ -21,10 +21,16 @@ options:
   port_usb: "/dev/ttyUSB1"
   password_mqtt: ""
   host_arkteos: "192.168.252.72"
+  token_influxdb: ""
+  url_influxdb: "http://192.168.x.x:8086"
+  influx_org: "hataden"
 schema:
   log_level: list(debug|info|warning)
   port_usb: str
   password_mqtt: password
   host_arkteos: str
+  token_influxdb: str
+  url_influxdb: str
+  influx_org: str  
 map:
   - config:rw

@@ -6,6 +6,9 @@ bashio::log.info "Running arkteos addon"
 declare password_mqtt
 declare log_level
 declare host_arkteos
+declare token_influxdb
+declare url_influxdb
+declare influx_org
 
 # Get all arguments
 password_mqtt=$(bashio::config 'password_mqtt')
@@ -16,5 +19,14 @@ export LOGLEVEL="${log_level}"
 
 host_arkteos=$(bashio::config 'host_arkteos')
 export ARKHOST="${host_arkteos}"
+
+token_influxdb=$(bashio::config 'token_influxdb')
+export TOKENDB="${token_influxdb}"
+
+url_influxdb=$(bashio::config 'url_influxdb')
+export URLDB="${url_influxdb}"
+
+influx_org=$(bashio::config 'influx_org')
+export INFLUX_ORG="${influx_org}"
 
 exec python3 /arkteos/arkteos.py
