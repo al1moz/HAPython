@@ -1,7 +1,7 @@
 
 ---
 name: HAPython Mycron
-version: "0.0.1.0"
+version: "0.0.1.1"
 slug: hapython-mycron
 description: Python Crontab Add-ons
 url: https://github.com/al1moz/HAPython/mycron
@@ -18,7 +18,13 @@ devices:
   - /dev/ttyUSB1:/dev/ttyUSB1
 options:
   password_mqtt: ""
+  token_influxdb: ""
+  url_influxdb: "http://192.168.x.x:8086"
+  influx_org: "hataden"
 schema:
   password_mqtt: password
+  token_influxdb: str
+  url_influxdb: str
+  influx_org: str
 map:
   - config:rw

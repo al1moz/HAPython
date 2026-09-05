@@ -4,9 +4,21 @@ bashio::log.info "Running getMqtt addon"
 
 # Declare variables
 declare password_mqtt
+declare token_influxdb
+declare url_influxdb
+declare influx_org
 
 # Get all arguments
 password_mqtt=$(bashio::config 'password_mqtt')
 export PASSWORDMQTT="${password_mqtt}"
+
+token_influxdb=$(bashio::config 'token_influxdb')
+export TOKENDB="${token_influxdb}"
+
+url_influxdb=$(bashio::config 'url_influxdb')
+export URLDB="${url_influxdb}"
+
+influx_org=$(bashio::config 'influx_org')
+export INFLUX_ORG="${influx_org}"
 
 exec python3 /getmqtt/getMqtt.py
