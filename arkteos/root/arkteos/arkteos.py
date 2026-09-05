@@ -75,14 +75,14 @@ if not INFLUX_ORG:
 # ============================================================
 
 def connect_mqtt() -> mqtt_client:
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
+    def on_connect(client, userdata, flags, reason_code, properties):
+        if reason_code == 0:
             logging.info("Connected to MQTT Broker!")
         else:
-            logging.warning("Failed to connect, return code %d\n", rc)
+            logging.warning("Failed to connect, return code %s\n", reason_code)
 
     client = mqtt_client.Client(
-        mqtt_client.CallbackAPIVersion.VERSION1,
+        mqtt_client.CallbackAPIVersion.VERSION2,
         client_id
     )
     client.username_pw_set(USERNAME, PASSWORD)
@@ -262,7 +262,7 @@ def main():
                 ) / item['divider']
 
             logging.debug(
-                datetime.utcnow().strftime("%H:%M:%S") + ':'
+                datetime.now(timezone.utc).strftime("%H:%M:%S") + ':'
                 + MQTT_BASE_TOPIC + item['name'] + ':%.1f',
                 item_value
             )
