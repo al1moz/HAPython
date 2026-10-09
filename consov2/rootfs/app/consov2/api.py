@@ -61,6 +61,12 @@ class Sender(threading.Thread):
                                     result.get("errors", [])[:5])
                     else:
                         log.debug("Lot %s : %s", idem, result)
+                        accepted = result.get("accepted") if isinstance(result, dict) else None
+                        log.info("Envoyé au site : %s mesure(s)%s, %d lot(s) encore en file.",
+                                 "?" if accepted is None else accepted,
+                                 "" if not isinstance(result, dict) or not result.get("duplicates")
+                                 else " (%s déjà reçue(s))" % result["duplicates"],
+                                 self.spool.pending())
                 except ValueError:
                     log.warning("Lot %s : réponse du site illisible (HTTP %s) : %s", idem, status, text[:300])
                 continue

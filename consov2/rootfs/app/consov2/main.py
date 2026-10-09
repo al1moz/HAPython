@@ -114,6 +114,8 @@ class App:
         if api.get("url") and api.get("token"):
             self.sender = Sender(api["url"], api["token"], self.spool, self.stop, self.sender_wake)
             self.sender.start()
+            if self.spool.pending():
+                log.info("%d lot(s) restés en file : envoi au site.", self.spool.pending())
         else:
             log.warning("api.url ou api.token vide : les mesures sont gardées en file jusqu'à leur configuration.")
 
@@ -264,7 +266,7 @@ class App:
             return
         self.spool.push(batch)
         self.sender_wake.set()
-        log.info("%d mesure(s) mises en file (%s).", len(batch), time.strftime("%H:%M:%S", time.localtime(ts)))
+        log.debug("%d mesure(s) mises en file (%s).", len(batch), time.strftime("%H:%M:%S", time.localtime(ts)))
         api = self.opts.get("api") or {}
         # L'ancien site attend une ligne par période : pas d'envoi pour un envoi anticipé (ECS) ou à l'arrêt.
         if api.get("legacy_receiver_url") and regular:
@@ -288,7 +290,11 @@ class App:
         self.flush(int(time.time()), regular=False)  # période en cours, pour ne rien perdre à l'arrêt
         if self.mqtt:
             self.mqtt.stop()
-        log.info("Arrêt terminé.")
+        pending = self.spool.pending()
+        if pending:
+            log.info("Arrêt terminé, %d lot(s) en file : envoyés au prochain démarrage.", pending)
+        else:
+            log.info("Arrêt terminé.")
 
 
 def load_options(path: str = OPTIONS) -> dict:
