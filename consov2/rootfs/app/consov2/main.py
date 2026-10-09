@@ -32,6 +32,41 @@ INFLUX_LINKY_TEXT = {"DATE", "NGTF", "LTARF", "MSG1", "NJOURF", "NJOURF+1", "PJO
                      "EASD02", "STGE", "RELAIS"}
 
 
+class Outage:
+    """Journal d'une source lue à intervalle régulier, sans avertir à chaque échec isolé.
+
+    Avertit au premier échec si la source n'a encore jamais répondu (erreur de configuration),
+    puis seulement après `after` secondes sans aucune lecture réussie, et de nouveau toutes
+    les `every` secondes tant que ça dure. Signale le retour de la source.
+    """
+
+    def __init__(self, name: str, after: float = 900, every: float = 3600, clock=time.monotonic):
+        self.name, self.after, self.every, self.clock = name, after, every, clock
+        self.last_ok = None
+        self.since = clock()
+        self.warned_at = None
+
+    def success(self):
+        if self.warned_at is not None:
+            log.info("%s : de nouveau joignable.", self.name)
+        self.last_ok = self.clock()
+        self.warned_at = None
+
+    def failure(self, detail) -> bool:
+        """Note un échec ; renvoie True si un avertissement a été écrit."""
+        now = self.clock()
+        silent_for = now - (self.since if self.last_ok is None else self.last_ok)
+        if self.last_ok is None and self.warned_at is None:
+            log.warning("%s : %s (nouvel essai à chaque intervalle)", self.name, detail)
+        elif silent_for >= self.after and (self.warned_at is None or now - self.warned_at >= self.every):
+            log.warning("%s : aucune lecture réussie depuis %d min (%s)", self.name, silent_for // 60, detail)
+        else:
+            log.debug("%s : %s", self.name, detail)
+            return False
+        self.warned_at = now
+        return True
+
+
 def influx_linky_value(name: str, value):
     """Type d'un champ Linky dans InfluxDB, identique à l'ancien add-on teleinfo."""
     if name == "COSPHI":
@@ -169,17 +204,15 @@ class App:
         ark = self.opts["arkteos"]
         host, port = ark["host"], int(ark.get("port") or 9641)
         every = max(30, int(ark.get("interval_seconds", 60)))
-        failures = 0
+        outage = Outage("PAC Arkteos (%s:%s)" % (host, port))
         while not self.stop.is_set():
             try:
                 values = arkteos.read_once(host, port, timeout=min(30, every))
             except OSError as exc:
                 values = None
-                failures += 1
-                (log.warning if failures in (1, 10) or failures % 60 == 0 else log.debug)(
-                    "PAC Arkteos injoignable (%s:%s) : %s", host, port, exc)
+                outage.failure(exc)
             if values:
-                failures = 0
+                outage.success()
                 ts = int(time.time())
                 for name, value in values.items():
                     self.agg.add(Measurement("pac_" + name, value, arkteos.UNITS[name], ts, "arkteos"))

@@ -1,5 +1,5 @@
 name: ConsoV2
-version: "0.1.1"
+version: "0.1.2"
 slug: consov2
 description: Linky, PAC Arkteos, Shelly EM et capteurs Home Assistant envoyés au site ConsoV2
 url: https://github.com/al1moz/HAPython/tree/main/consov2
