@@ -9,7 +9,7 @@ Add-ons Home Assistant d'Alain. Le site qui reçoit les données et la mémoire 
 
 ## Règles
 
-- Répondre en français. Une branche et une PR par changement ; ne jamais fusionner sans le « go » d'Alain.
+- Répondre en français. Pas de PR : quand Alain le dit, commit et push directement sur `main`. Il n'a pas de copie locale de ce dépôt connectée à Claude : il teste l'add-on en le mettant à jour dans Home Assistant. Ne jamais pousser sans son « go ».
 - Augmenter `version` dans `consov2/config.yaml` (et `__version__` dans `rootfs/app/consov2/__init__.py`) à chaque changement, sinon Home Assistant ne propose pas la mise à jour.
 - Dépôt public : aucun secret, aucune adresse IP, aucun nom de commune ni coordonnée GPS dans le code ou les valeurs par défaut. L'IP de la PAC, les jetons et les entités se saisissent dans la configuration de l'add-on.
 - Seulement des paquets Debian (`python3-serial`, `python3-paho-mqtt`), pas de pip. Rester compatible paho 1.x et 2.x.
