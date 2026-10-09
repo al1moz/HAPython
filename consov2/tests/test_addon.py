@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "rootfs", "app"
 
 from consov2 import arkteos, influx, legacy, tic  # noqa: E402
 from consov2.aggregator import Aggregator  # noqa: E402
+from consov2.main import influx_linky_value  # noqa: E402
 from consov2.model import Measurement  # noqa: E402
 from consov2.spool import Spool  # noqa: E402
 
@@ -112,6 +113,13 @@ class OutputsTest(unittest.TestCase):
                          "EASF01,host=raspberry,region=linky value=17667900i 1700000000")
         self.assertEqual(influx.line("LTARF", {}, 'BA"SE', 1), 'LTARF value="BA\\"SE" 1')
         self.assertEqual(influx.line("SHELLYEM1_0", {}, 12.0, 1), "SHELLYEM1_0 value=12.0 1")
+
+    def test_types_linky_comme_avant(self):
+        self.assertEqual(influx_linky_value("ADSC", "041876097274"), 41876097274)  # entier, comme teleinfo
+        self.assertEqual(influx_linky_value("VTIC", "02"), 2)
+        self.assertEqual(influx_linky_value("LTARF", "BASE"), "BASE")
+        self.assertEqual(influx_linky_value("PPOINTE", "NONUTILE"), 0)
+        self.assertEqual(influx_linky_value("COSPHI", 0.97), 0.97)
 
     def test_legacy(self):
         batch = [Measurement("elec_index", 17667900, "Wh", 1, "linky", "counter"),
