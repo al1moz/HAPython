@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "rootfs", "app"
 
 from consov2 import arkteos, influx, legacy, tic  # noqa: E402
 from consov2.aggregator import Aggregator  # noqa: E402
-from consov2.main import influx_linky_value  # noqa: E402
+from consov2.main import Outage, influx_linky_value  # noqa: E402
 from consov2.model import Measurement  # noqa: E402
 from consov2.spool import Spool  # noqa: E402
 
@@ -127,6 +127,36 @@ class OutputsTest(unittest.TestCase):
         q = legacy.build_query(batch, "elec_index", ["circuit_a", "circuit_b"])
         self.assertEqual(q, "cindex=17667.9&q1=13&q2=0")
         self.assertEqual(legacy.build_query(batch[1:], "elec_index", ["circuit_a"]), "")
+
+
+class OutageTest(unittest.TestCase):
+    def setUp(self):
+        self.now = 0.0
+        self.outage = Outage("PAC", after=900, every=3600, clock=lambda: self.now)
+
+    def at(self, t: float, ok: bool) -> bool:
+        self.now = t
+        if ok:
+            self.outage.success()
+            return False
+        return self.outage.failure("délai dépassé")
+
+    def test_premier_echec_signale_si_jamais_lue(self):
+        self.assertTrue(self.at(0, False))
+        self.assertFalse(self.at(60, False))
+
+    def test_echecs_isoles_silencieux(self):
+        self.at(0, True)
+        warned = [self.at(t, t % 120 == 0) for t in range(60, 3600, 60)]  # une lecture sur deux échoue
+        self.assertFalse(any(warned))
+
+    def test_panne_prolongee_puis_rappel_horaire(self):
+        self.at(0, True)
+        warned = [t for t in range(60, 7200, 60) if self.at(t, False)]
+        self.assertEqual(warned, [900, 4500])
+        with self.assertLogs("consov2", "INFO") as logs:
+            self.at(7200, True)
+        self.assertIn("de nouveau joignable", logs.output[0])
 
 
 if __name__ == "__main__":

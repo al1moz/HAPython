@@ -56,13 +56,13 @@ class Sender(threading.Thread):
                 self.last_error = ""
                 try:
                     result = json.loads(text)
-                    if result.get("rejected"):
+                    if isinstance(result, dict) and result.get("rejected"):
                         log.warning("Lot %s : %s mesure(s) refusée(s) : %s", idem, result["rejected"],
                                     result.get("errors", [])[:5])
                     else:
                         log.debug("Lot %s : %s", idem, result)
                 except ValueError:
-                    pass
+                    log.warning("Lot %s : réponse du site illisible (HTTP %s) : %s", idem, status, text[:300])
                 continue
             if status in (413, 422) or (400 <= status < 500 and status not in (401, 403, 408, 429)):
                 # Le site refuse ce lot tel quel : le renvoyer ne servirait à rien.
