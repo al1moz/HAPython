@@ -1,0 +1,28 @@
+configuration:
+  log_level:
+    name: Niveau de journal
+    description: info en temps normal, debug pour diagnostiquer.
+  api:
+    name: Site ConsoV2
+    description: Adresse du site, jeton d'envoi (portée ingest), période d'envoi en minutes et, pendant la transition, l'adresse de l'ancien receiver.php.
+  mqtt:
+    name: Broker MQTT
+    description: Laisser l'hôte vide pour utiliser automatiquement le Mosquitto de Home Assistant.
+  influxdb:
+    name: InfluxDB
+    description: Écriture facultative dans InfluxDB 2, avec les mêmes noms qu'avant pour garder les tableaux Grafana.
+  linky:
+    name: Linky
+    description: Port série du module TIC (de préférence /dev/serial/by-id/…) et index à envoyer.
+  arkteos:
+    name: PAC Arkteos
+    description: Adresse de la régulation REG3 sur le réseau local et fréquence de lecture.
+  shelly:
+    name: Shelly EM
+    description: Sujets MQTT des 8 pinces et mesure du site correspondante, dans l'ordre q1 à q8 de l'ancien site.
+  homeassistant:
+    name: Entités Home Assistant
+    description: Capteurs à relayer (Netatmo…) avec le code de mesure du site.
+  ecs:
+    name: Alerte appoint ECS
+    description: Envoi immédiat quand ce circuit franchit le seuil (W).

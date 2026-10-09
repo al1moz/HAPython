@@ -1,0 +1,120 @@
+name: ConsoV2
+version: "0.1.0"
+slug: consov2
+description: Linky, PAC Arkteos, Shelly EM et capteurs Home Assistant envoyés au site ConsoV2
+url: https://github.com/al1moz/HAPython/tree/main/consov2
+arch:
+  - aarch64
+  - amd64
+  - armv7
+init: false
+startup: application
+boot: auto
+uart: true
+homeassistant_api: true
+services:
+  - mqtt:want
+options:
+  log_level: info
+  api:
+    url: ""
+    token: ""
+    interval_minutes: 5
+    legacy_receiver_url: ""
+  mqtt:
+    host: ""
+    port: 1883
+    username: ""
+    password: ""
+    discovery: true
+  influxdb:
+    enabled: false
+    url: ""
+    token: ""
+    org: ""
+    bucket_linky: teleinfo2
+    bucket_shelly: teleinfo2
+    bucket_arkteos: arkteos
+  linky:
+    enabled: true
+    port: /dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_TINFO-1043-if00-port0
+    index_field: EASF01
+  arkteos:
+    enabled: false
+    host: ""
+    port: 9641
+    interval_seconds: 60
+    legacy_mqtt_topics: true
+  shelly:
+    enabled: true
+    channels:
+      - topic: shellies/shellyem1/emeter/0/power
+        metric: circuit_seche_serviettes
+      - topic: shellies/shellyem1/emeter/1/power
+        metric: circuit_geothermie
+      - topic: shellies/shellyem2/emeter/0/power
+        metric: circuit_prises_rdc
+      - topic: shellies/shellyem2/emeter/1/power
+        metric: circuit_appoint_ecs
+      - topic: shellies/shellyem3/emeter/0/power
+        metric: circuit_double_flux
+      - topic: shellies/shellyem3/emeter/1/power
+        metric: circuit_cuisson
+      - topic: shellies/shellyem4/emeter/0/power
+        metric: circuit_garage
+      - topic: shellies/shellyem4/emeter/1/power
+        metric: circuit_lavage
+  homeassistant:
+    enabled: false
+    interval_seconds: 60
+    entities: []
+  ecs:
+    metric: circuit_appoint_ecs
+    threshold_w: 500
+schema:
+  log_level: list(trace|debug|info|notice|warning|error|fatal)
+  api:
+    url: str?
+    token: password?
+    interval_minutes: int(1,60)
+    legacy_receiver_url: str?
+  mqtt:
+    host: str?
+    port: port
+    username: str?
+    password: password?
+    discovery: bool
+  influxdb:
+    enabled: bool
+    url: str?
+    token: password?
+    org: str?
+    bucket_linky: str
+    bucket_shelly: str
+    bucket_arkteos: str
+  linky:
+    enabled: bool
+    port: str?
+    index_field: match(^(EAST|EASF\d\d)$)
+  arkteos:
+    enabled: bool
+    host: str?
+    port: port
+    interval_seconds: int(30,3600)
+    legacy_mqtt_topics: bool
+  shelly:
+    enabled: bool
+    channels:
+      - topic: str
+        metric: match(^[a-z][a-z0-9_]{0,63}$)
+  homeassistant:
+    enabled: bool
+    interval_seconds: int(15,3600)
+    entities:
+      - entity_id: str
+        metric: match(^[a-z][a-z0-9_]{0,63}$)
+        unit: str?
+        source: match(^[a-z][a-z0-9_]{0,31}$)?
+  ecs:
+    metric: str?
+    threshold_w: int(0,10000)
