@@ -4,8 +4,8 @@ Add-ons Home Assistant d'Alain. Le site qui reçoit les données et la mémoire 
 
 ## Contenu
 
-- `consov2/` : **l'add-on unifié**, à utiliser. Il remplace les trois autres : Linky, PAC Arkteos, Shelly EM et entités Home Assistant (Netatmo) vers l'API du site ConsoV2, InfluxDB et MQTT.
-- `teleinfo/`, `arkteos/`, `mycron/`, `tester/` : anciens add-ons, gardés jusqu'à ce qu'Alain fasse le ménage. Ne plus les modifier. Ils ne doivent pas tourner en même temps que ConsoV2 (le port série du Linky ne s'ouvre qu'une fois).
+- `consov2/` : l'add-on unifié : Linky, PAC Arkteos, Shelly EM et entités Home Assistant (Netatmo) vers l'API du site ConsoV2, InfluxDB et MQTT.
+- Les anciens add-ons `teleinfo`, `arkteos`, `mycron` et `tester` ont été retirés le 9 oct. 2026 ; ils restent dans l'historique git si besoin de comparer.
 
 ## Règles
 
