@@ -26,6 +26,23 @@ TAGS_LINKY = {"host": "raspberry", "region": "linky"}
 TAGS_SHELLY = {"host": "raspberry", "region": "shellyem"}
 TAGS_ARKTEOS = {"host": "elitedesk", "region": "pac"}
 
+# Champs Linky écrits en texte par l'ancien add-on teleinfo ; tous les autres en entier (0 si illisible).
+# InfluxDB refuse d'écrire un champ avec un autre type que celui déjà enregistré.
+INFLUX_LINKY_TEXT = {"DATE", "NGTF", "LTARF", "MSG1", "NJOURF", "NJOURF+1", "PJOURF", "PJOURF+1",
+                     "EASD02", "STGE", "RELAIS"}
+
+
+def influx_linky_value(name: str, value):
+    """Type d'un champ Linky dans InfluxDB, identique à l'ancien add-on teleinfo."""
+    if name == "COSPHI":
+        return float(value)
+    if name in INFLUX_LINKY_TEXT:
+        return str(value)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
 STATUS = {
     "addon_pending": MetricInfo("File d'attente vers le site", None, "measurement", {"icon": "mdi:tray-full"}),
     "addon_last_send": MetricInfo("Dernier envoi au site", "timestamp", None),
@@ -134,7 +151,7 @@ class App:
             if all(isinstance(v, int) for v in (irms, urms, sinsts)) and irms > 0 and urms > 0:
                 fields = dict(fields, COSPHI=sinsts / (irms * urms))
             for name, value in fields.items():
-                self.influx.write(bucket, name, TAGS_LINKY, value, ts)
+                self.influx.write(bucket, name, TAGS_LINKY, influx_linky_value(name, value), ts)
 
     def _shelly_handler(self, topic: str, metric: str):
         influx_name = shelly_influx_name(topic, metric)
