@@ -1,0 +1,27 @@
+configuration:
+  log_level:
+    name: Log level
+  api:
+    name: ConsoV2 site
+    description: Site URL, ingest token, send period in minutes and optional legacy receiver.php URL.
+  mqtt:
+    name: MQTT broker
+    description: Leave host empty to use the Home Assistant Mosquitto add-on.
+  influxdb:
+    name: InfluxDB
+    description: Optional InfluxDB 2 output, same measurement names as the previous add-ons.
+  linky:
+    name: Linky
+    description: Serial port of the TIC module and index field to send.
+  arkteos:
+    name: Arkteos heat pump
+    description: REG3 controller address and polling interval.
+  shelly:
+    name: Shelly EM
+    description: MQTT topics of the 8 clamps and matching site metric.
+  homeassistant:
+    name: Home Assistant entities
+    description: Sensors to forward (Netatmo…) with the site metric code.
+  ecs:
+    name: Hot water backup alert
+    description: Send immediately when this circuit crosses the threshold (W).

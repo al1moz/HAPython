@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bashio
+# Les options sont lues par le programme dans /data/options.json.
+bashio::log.info "Démarrage de ConsoV2"
+cd /app || exit 1
+exec python3 -u -m consov2.main
