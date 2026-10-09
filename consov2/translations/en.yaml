@@ -15,7 +15,7 @@ configuration:
     description: Serial port of the TIC module and index field to send.
   arkteos:
     name: Arkteos heat pump
-    description: REG3 controller address and polling interval.
+    description: REG3 controller address, polling interval (300 s recommended) and time allowed for each read.
   shelly:
     name: Shelly EM
     description: MQTT topics of the 8 clamps and matching site metric.

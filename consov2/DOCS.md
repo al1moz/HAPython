@@ -36,6 +36,8 @@ Laisser `host` vide : l'add-on prend automatiquement le broker Mosquitto de Home
 
 `host` : adresse IP de la régulation. Les valeurs arrivent sur le site sous les codes `pac_…` (eau départ et retour, ballon ECS, pressions, consignes). `legacy_mqtt_topics` publie aussi les anciens sujets `arkteos/reg3/…` pour les automatisations existantes.
 
+`interval_seconds` : une lecture toutes les 300 s par défaut, calée sur les périodes d'envoi de 5 min, comme l'ancien add-on. La régulation est capricieuse : lire plus souvent ne donne pas plus de valeurs et peut la gêner. `timeout_seconds` : temps accordé à une lecture, connexion comprise (120 s par défaut). La régulation met parfois une à deux minutes à accepter la connexion ; l'add-on réessaie toutes les 5 s dans cette limite. Le journal ne signale la PAC qu'après 15 min sans aucune lecture réussie.
+
 ### Shelly EM
 
 Les 8 canaux par défaut reprennent les sujets de getMqtt (`shellies/shellyemN/emeter/C/power`) dans l'ordre CPT1 à CPT8 de l'ancien site. Les valeurs négatives sont prises en valeur absolue, comme avant.

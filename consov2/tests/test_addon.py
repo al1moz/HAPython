@@ -1,7 +1,10 @@
 """Tests de l'add-on sans matériel : python3 -m unittest discover -s consov2/tests"""
 import os
+import socket
 import sys
 import tempfile
+import threading
+import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "rootfs", "app"))
@@ -68,6 +71,45 @@ class ArkteosTest(unittest.TestCase):
         v = arkteos.decode(bytes(f227))
         self.assertEqual(v["primaire_temp_eau_aller"], 35.2)
         self.assertEqual(v["primaire_pression"], 1.5)
+
+    def setUp(self):
+        self.retry = arkteos.RETRY_DELAY
+        arkteos.RETRY_DELAY = 0.2
+
+    def tearDown(self):
+        arkteos.RETRY_DELAY = self.retry
+
+    @staticmethod
+    def free_port() -> int:
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            return s.getsockname()[1]
+
+    def test_connexion_tardive(self):
+        """La régulation n'accepte la connexion qu'au bout d'un moment : on réessaie."""
+        port = self.free_port()
+
+        def pac():
+            time.sleep(0.7)  # refuse d'abord les connexions
+            with socket.socket() as srv:
+                srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                srv.bind(("127.0.0.1", port))
+                srv.listen(1)
+                conn, _ = srv.accept()
+                with conn:
+                    conn.sendall(bytes(163))
+                    time.sleep(0.1)
+                    conn.sendall(bytes(227))
+                    time.sleep(0.2)
+        threading.Thread(target=pac, daemon=True).start()
+        values = arkteos.read_once("127.0.0.1", port, timeout=5)
+        self.assertEqual(set(values), set(arkteos.UNITS))
+
+    def test_abandon_apres_le_delai(self):
+        start = time.monotonic()
+        with self.assertRaises(OSError):
+            arkteos.read_once("127.0.0.1", self.free_port(), timeout=1)
+        self.assertLess(time.monotonic() - start, 2)
 
 
 class AggregatorTest(unittest.TestCase):

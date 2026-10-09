@@ -4,13 +4,19 @@
 Décodage repris de l'ancien add-on (cyrilpawelko/arkteos_reg3), avec :
 - un délai maximal (plus de boucle infinie si la PAC ne répond pas) ;
 - des valeurs signées sur 16 bits (températures négatives dehors).
+La régulation met parfois une à deux minutes à accepter la connexion :
+comme l'ancien add-on, on réessaie toutes les 5 s, mais dans la limite du délai.
 """
 import logging
 import socket
+import threading
 import time
 from typing import Dict, Optional
 
 log = logging.getLogger("arkteos")
+
+RETRY_DELAY = 5.0   # secondes entre deux tentatives de connexion
+MIN_READ_TIME = 15.0  # temps laissé à la lecture des trames, même après une connexion tardive
 
 # (trame, nom, unité, octet bas, octet haut ou None, diviseur)
 DECODER = [
@@ -55,12 +61,31 @@ def decode(frame: bytes) -> Dict[str, float]:
     return out
 
 
-def read_once(host: str, port: int = 9641, timeout: float = 30.0) -> Optional[Dict[str, float]]:
+def connect(host: str, port: int, deadline: float, stop: Optional[threading.Event] = None) -> socket.socket:
+    """Ouvre la connexion en réessayant jusqu'à l'échéance ; lève la dernière erreur sinon."""
+    while True:
+        try:
+            return socket.create_connection((host, port), timeout=max(1.0, min(15.0, deadline - time.monotonic())))
+        except OSError as exc:
+            if time.monotonic() + RETRY_DELAY >= deadline:
+                raise
+            log.debug("Arkteos : connexion refusée (%s), nouvel essai dans %.0f s", exc, RETRY_DELAY)
+            if stop is not None:
+                if stop.wait(RETRY_DELAY):
+                    raise
+            else:
+                time.sleep(RETRY_DELAY)
+
+
+def read_once(host: str, port: int = 9641, timeout: float = 120.0,
+              stop: Optional[threading.Event] = None) -> Optional[Dict[str, float]]:
     """Se connecte, lit les deux trames, renvoie les valeurs ou None après le délai."""
     deadline = time.monotonic() + timeout
     values: Dict[str, float] = {}
     seen = set()
-    with socket.create_connection((host, port), timeout=min(10.0, timeout)) as sock:
+    sock = connect(host, port, deadline, stop)
+    deadline = max(deadline, time.monotonic() + MIN_READ_TIME)
+    with sock:
         buf = b""
         while seen != {163, 227} and time.monotonic() < deadline:
             sock.settimeout(max(0.5, deadline - time.monotonic()))

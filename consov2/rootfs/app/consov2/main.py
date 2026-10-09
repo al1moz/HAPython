@@ -203,11 +203,13 @@ class App:
     def _arkteos_loop(self):
         ark = self.opts["arkteos"]
         host, port = ark["host"], int(ark.get("port") or 9641)
-        every = max(30, int(ark.get("interval_seconds", 60)))
+        every = max(30, int(ark.get("interval_seconds") or 300))
+        # Délai d'une lecture (connexion comprise), toujours plus court que l'intervalle.
+        budget = max(10, min(int(ark.get("timeout_seconds") or 120), every - 15))
         outage = Outage("PAC Arkteos (%s:%s)" % (host, port))
         while not self.stop.is_set():
             try:
-                values = arkteos.read_once(host, port, timeout=min(30, every))
+                values = arkteos.read_once(host, port, timeout=budget, stop=self.stop)
             except OSError as exc:
                 values = None
                 outage.failure(exc)
@@ -221,7 +223,10 @@ class App:
                         self.influx.write(bucket, name, TAGS_ARKTEOS, float(value), ts)
                     if self.mqtt and ark.get("legacy_mqtt_topics"):
                         self.mqtt.publish("arkteos/reg3/" + name, str(value))
-            self.stop.wait(every)
+            # Lecture suivante calée sur l'horloge, 10 s après le début d'une période : avec 300 s,
+            # une lecture par période d'envoi de 5 min, même si la connexion a pris du temps.
+            now = time.time()
+            self.stop.wait((now // every + 1) * every + 10 - now)
 
     def _on_ecs(self, above: bool):
         log.info("Appoint ECS %s : envoi immédiat.", "en marche" if above else "arrêté")

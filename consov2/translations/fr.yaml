@@ -16,7 +16,7 @@ configuration:
     description: Port série du module TIC (de préférence /dev/serial/by-id/…) et index à envoyer.
   arkteos:
     name: PAC Arkteos
-    description: Adresse de la régulation REG3 sur le réseau local et fréquence de lecture.
+    description: Adresse de la régulation REG3 sur le réseau local, fréquence de lecture (300 s conseillé) et délai accordé à chaque lecture.
   shelly:
     name: Shelly EM
     description: Sujets MQTT des 8 pinces et mesure du site correspondante, dans l'ordre q1 à q8 de l'ancien site.
