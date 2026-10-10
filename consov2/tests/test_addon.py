@@ -63,14 +63,16 @@ class ArkteosTest(unittest.TestCase):
     def test_decode_signe(self):
         f163 = bytearray(163)
         f163[24], f163[25] = (-35) & 0xFF, ((-35) >> 8) & 0xFF   # -3,5 °C
+        f163[94] = 15                                              # captage 1,5 bar
         f227 = bytearray(227)
         f227[54], f227[55] = 352 & 0xFF, 352 >> 8                  # 35,2 °C
         f227[62] = 15                                              # 1,5 bar
         v = arkteos.decode(bytes(f163))
-        self.assertEqual(v, {"exterieur_temp": -3.5})
+        self.assertEqual(v, {"exterieur_temp": -3.5, "externe_pression": 1.5})
         v = arkteos.decode(bytes(f227))
         self.assertEqual(v["primaire_temp_eau_aller"], 35.2)
         self.assertEqual(v["primaire_pression"], 1.5)
+        self.assertNotIn("externe_pression", v)
 
     def setUp(self):
         self.retry = arkteos.RETRY_DELAY

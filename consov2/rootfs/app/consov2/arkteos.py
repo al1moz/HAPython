@@ -21,7 +21,9 @@ MIN_READ_TIME = 15.0  # temps laissé à la lecture des trames, même après une
 # (trame, nom, unité, octet bas, octet haut ou None, diviseur)
 DECODER = [
     (227, "primaire_pression", "bar", 62, None, 10),
-    (227, "externe_pression", "bar", 46, None, 10),
+    # Pression eau de captage (i16Pression_EauCaptage, structure Geotwin du décodeur de
+    # cyrilpawelko/arkteos_reg3). L'octet 46 de la trame 227 est le modèle de PAC (0x13 = 19).
+    (163, "externe_pression", "bar", 94, 95, 10),
     (227, "primaire_temp_eau_aller", "°C", 54, 55, 10),
     (227, "primaire_temp_eau_retour", "°C", 56, 57, 10),
     (163, "exterieur_temp", "°C", 24, 25, 10),
@@ -34,7 +36,7 @@ DECODER = [
 ]
 LABELS = {
     "primaire_pression": "PAC pression eau primaire",
-    "externe_pression": "PAC pression eau extérieure",
+    "externe_pression": "PAC pression eau captage",
     "primaire_temp_eau_aller": "PAC eau départ",
     "primaire_temp_eau_retour": "PAC eau retour",
     "exterieur_temp": "PAC température extérieure",
@@ -100,6 +102,8 @@ def read_once(host: str, port: int = 9641, timeout: float = 120.0,
             for size in (227, 163):
                 if len(buf) == size or (len(buf) > size and len(buf) - size in (163, 227)):
                     frame, buf = buf[:size], buf[size:]
+                    # Trame brute en niveau debug : sert à retrouver l'octet d'une valeur (octet n = n-ième paire).
+                    log.debug("Trame Arkteos %d octets : %s", size, frame.hex(" "))
                     values.update(decode(frame))
                     seen.add(size)
             if len(buf) > 1024:
